@@ -76,14 +76,19 @@ export const useSupportSystem = () => {
       if (error) throw error;
       
       // Ensure messages have is_read property and compatible user data
-      const messagesWithReadStatus = (data || []).map(msg => ({
-        ...msg,
-        is_read: msg.is_read ?? false,
-        user: msg.user ? {
-          name: msg.user.name || 'Usuário',
-          email: msg.user.email || undefined
-        } : undefined
-      }));
+      const messagesWithReadStatus = (data || []).map(msg => {
+        // Handle user data more safely
+        const userData = msg.user && typeof msg.user === 'object' ? msg.user as any : null;
+        
+        return {
+          ...msg,
+          is_read: msg.is_read ?? false,
+          user: userData ? {
+            name: userData.name || 'Usuário',
+            email: userData.email // This might be undefined, which is fine
+          } : undefined
+        };
+      });
       
       setMessages(messagesWithReadStatus);
     } catch (error) {
@@ -97,7 +102,7 @@ export const useSupportSystem = () => {
   }, [toast]);
 
   // Create new ticket
-  const createTicket = useCallback(async (ticketData: CreateTicketParams) => {
+  const createTicket = useCallback(async (ticketData: CreateTicketParams): Promise<void> => {
     setIsCreating(true);
     try {
       const { data, error } = await createTicket(ticketData);
@@ -109,8 +114,6 @@ export const useSupportSystem = () => {
         title: "Sucesso",
         description: "Ticket criado com sucesso",
       });
-      
-      return data;
     } catch (error) {
       console.error('Erro ao criar ticket:', error);
       toast({
@@ -125,7 +128,7 @@ export const useSupportSystem = () => {
   }, [loadTickets, toast]);
 
   // Update ticket status
-  const updateTicketStatus = useCallback(async (ticketId: string, status: string) => {
+  const updateTicketStatus = useCallback(async (ticketId: string, status: string): Promise<void> => {
     try {
       const { data, error } = await updateTicket(ticketId, { status: status as TicketStatus });
       if (error) throw error;
@@ -136,8 +139,6 @@ export const useSupportSystem = () => {
         title: "Sucesso",
         description: "Status do ticket atualizado",
       });
-      
-      return data;
     } catch (error) {
       console.error('Erro ao atualizar ticket:', error);
       toast({
@@ -149,7 +150,7 @@ export const useSupportSystem = () => {
   }, [loadTickets, toast]);
 
   // Assign ticket to technician
-  const assignTicket = useCallback(async (ticketId: string, technicianId: string) => {
+  const assignTicket = useCallback(async (ticketId: string, technicianId: string): Promise<void> => {
     try {
       const { data, error } = await updateTicket(ticketId, { 
         assigned_to: technicianId,
@@ -163,8 +164,6 @@ export const useSupportSystem = () => {
         title: "Sucesso",
         description: "Ticket atribuído com sucesso",
       });
-      
-      return data;
     } catch (error) {
       console.error('Erro ao atribuir ticket:', error);
       toast({

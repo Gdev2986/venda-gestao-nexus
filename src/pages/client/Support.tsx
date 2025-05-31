@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,6 +87,15 @@ const ClientSupport = () => {
     console.log('❌ Closing chat dialog');
     setShowChatDialog(false);
     setSelectedTicket(null);
+  };
+
+  // Wrapper functions to handle the void return type requirement
+  const handleUpdateTicketStatus = async (ticketId: string, status: string): Promise<void> => {
+    await updateTicketStatus(ticketId, status);
+  };
+
+  const handleAssignTicket = async (ticketId: string, technicianId: string): Promise<void> => {
+    await assignTicket(ticketId, technicianId);
   };
 
   // Statistics
@@ -343,8 +353,8 @@ const ClientSupport = () => {
                   <div className="space-y-4 overflow-y-auto">
                     <TicketStatusManager
                       ticket={selectedTicket}
-                      onStatusChange={updateTicketStatus}
-                      onAssignTicket={assignTicket}
+                      onStatusChange={handleUpdateTicketStatus}
+                      onAssignTicket={handleAssignTicket}
                     />
                   </div>
                 </div>

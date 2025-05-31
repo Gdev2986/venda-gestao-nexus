@@ -109,7 +109,7 @@ export const useSupportTickets = (): UseSupportTicketsReturn => {
         status: updates.status,
         priority: updates.priority,
         type: updates.type,
-        technician_id: updates.technician_id,
+        assigned_to: updates.assigned_to, // Use assigned_to instead of technician_id
         resolution: updates.resolution,
         scheduled_date: updates.scheduled_date
       };

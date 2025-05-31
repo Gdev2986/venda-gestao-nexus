@@ -129,7 +129,7 @@ const AdminSupport = () => {
     inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
     completed: tickets.filter(t => t.status === "COMPLETED").length,
     highPriority: tickets.filter(t => t.priority === "HIGH").length,
-    assigned: tickets.filter(t => t.technician_id).length
+    assigned: tickets.filter(t => t.assigned_to).length // Use assigned_to instead of technician_id
   };
 
   const getTicketsByStatus = (status: string) => {
@@ -372,8 +372,8 @@ const AdminSupport = () => {
                 <div>
                   <p><strong>Cliente:</strong> {selectedTicket.client?.business_name}</p>
                   <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
-                  {selectedTicket.technician_id && (
-                    <p><strong>Técnico:</strong> {technicians.find(t => t.id === selectedTicket.technician_id)?.name || 'Atribuído'}</p>
+                  {selectedTicket.assigned_to && (
+                    <p><strong>Técnico:</strong> {technicians.find(t => t.id === selectedTicket.assigned_to)?.name || 'Atribuído'}</p>
                   )}
                 </div>
                 <div>
@@ -448,7 +448,7 @@ const TicketsList = ({
             </div>
             <div className="text-sm text-muted-foreground">
               <span className="font-medium">{ticket.client?.business_name}</span> • {getTypeLabel(ticket.type)}
-              {ticket.technician_id && (
+              {ticket.assigned_to && (
                 <span> • Atribuído</span>
               )}
             </div>
@@ -467,7 +467,7 @@ const TicketsList = ({
                 >
                   Ver Detalhes
                 </Button>
-                {ticket.status === "PENDING" && !ticket.technician_id && (
+                {ticket.status === "PENDING" && !ticket.assigned_to && (
                   <Button 
                     size="sm"
                     onClick={() => onAssignTicket(ticket.id)}
@@ -475,7 +475,7 @@ const TicketsList = ({
                     Atender
                   </Button>
                 )}
-                {ticket.status === "PENDING" && ticket.technician_id === currentUserId && (
+                {ticket.status === "PENDING" && ticket.assigned_to === currentUserId && (
                   <Button 
                     size="sm"
                     onClick={() => onStatusChange(ticket.id, "IN_PROGRESS")}
@@ -483,7 +483,7 @@ const TicketsList = ({
                     Iniciar
                   </Button>
                 )}
-                {ticket.status === "IN_PROGRESS" && ticket.technician_id === currentUserId && (
+                {ticket.status === "IN_PROGRESS" && ticket.assigned_to === currentUserId && (
                   <Button 
                     size="sm"
                     onClick={() => onStatusChange(ticket.id, "COMPLETED")}

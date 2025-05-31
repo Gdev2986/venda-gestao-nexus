@@ -31,14 +31,19 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
       if (error) throw error;
       
       // Ensure all messages have is_read property and compatible user data
-      const messagesWithReadStatus = (data || []).map(msg => ({
-        ...msg,
-        is_read: msg.is_read ?? false,
-        user: msg.user ? {
-          name: msg.user.name || 'Usuário',
-          email: msg.user.email || undefined
-        } : undefined
-      }));
+      const messagesWithReadStatus = (data || []).map(msg => {
+        // Handle user data more safely
+        const userData = msg.user && typeof msg.user === 'object' ? msg.user as any : null;
+        
+        return {
+          ...msg,
+          is_read: msg.is_read ?? false,
+          user: userData ? {
+            name: userData.name || 'Usuário',
+            email: userData.email // This might be undefined, which is fine
+          } : undefined
+        };
+      });
       
       setMessages(messagesWithReadStatus);
       
@@ -86,12 +91,15 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
             const exists = prev.some(msg => msg.id === newMessage.id);
             if (exists) return prev;
             
+            // Handle user data more safely
+            const userData = newMessage.user && typeof newMessage.user === 'object' ? newMessage.user as any : null;
+            
             const messageWithReadStatus: SupportMessage = {
               ...newMessage,
               is_read: newMessage.is_read ?? false,
-              user: newMessage.user ? {
-                name: newMessage.user.name || 'Usuário',
-                email: newMessage.user.email || undefined
+              user: userData ? {
+                name: userData.name || 'Usuário',
+                email: userData.email // This might be undefined, which is fine
               } : undefined
             };
             
