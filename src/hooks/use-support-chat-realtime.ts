@@ -140,13 +140,13 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     };
   }, [ticketId, isOpen, user?.id, loadMessages, toast]);
 
-  // Send message function
+  // Send message function - fixed to use correct number of arguments
   const handleSendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim() || !user?.id || !ticketId || isSending) return;
 
     setIsSending(true);
     try {
-      const { data, error } = await sendMessage(ticketId, user.id, messageText.trim());
+      const { data, error } = await sendMessage(ticketId, messageText.trim());
       
       if (error) throw error;
 

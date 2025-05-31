@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, CreateTicketParams, TicketStatus } from "@/types/support.types";
+import { SupportTicket, CreateTicketParams, TicketStatus, TicketType, TicketPriority } from "@/types/support.types";
 
 // Get all support tickets
 export const getTickets = async () => {
@@ -26,15 +26,53 @@ export const getTickets = async () => {
     assigned_to: item.technician_id,
     title: item.title || item.description?.substring(0, 50) + '...' || 'Untitled',
     description: item.description,
-    type: item.type,
-    priority: item.priority,
-    status: item.status,
+    type: item.type as TicketType,
+    priority: item.priority as TicketPriority,
+    status: item.status as TicketStatus,
     scheduled_date: item.scheduled_date,
     created_at: item.created_at,
     updated_at: item.updated_at,
     resolution: item.resolution,
     client: item.client
   }));
+
+  return { data: transformedData, error: null };
+};
+
+// Get a specific ticket by ID
+export const getTicketById = async (ticketId: string) => {
+  const { data, error } = await supabase
+    .from('support_requests')
+    .select(`
+      *,
+      client:client_id (
+        business_name
+      )
+    `)
+    .eq('id', ticketId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching ticket by ID:', error);
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportTicket = {
+    id: data.id,
+    client_id: data.client_id,
+    assigned_to: data.technician_id,
+    title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled',
+    description: data.description,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
+    scheduled_date: data.scheduled_date,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    resolution: data.resolution,
+    client: data.client
+  };
 
   return { data: transformedData, error: null };
 };
@@ -64,9 +102,9 @@ export const getClientTickets = async (clientId: string) => {
     assigned_to: item.technician_id,
     title: item.title || item.description?.substring(0, 50) + '...' || 'Untitled',
     description: item.description,
-    type: item.type,
-    priority: item.priority,
-    status: item.status,
+    type: item.type as TicketType,
+    priority: item.priority as TicketPriority,
+    status: item.status as TicketStatus,
     scheduled_date: item.scheduled_date,
     created_at: item.created_at,
     updated_at: item.updated_at,
@@ -110,9 +148,9 @@ export const createTicket = async (ticketData: CreateTicketParams) => {
     assigned_to: data.technician_id,
     title: data.title || ticketData.title || 'Untitled',
     description: data.description,
-    type: data.type,
-    priority: data.priority,
-    status: data.status,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
     scheduled_date: data.scheduled_date,
     created_at: data.created_at,
     updated_at: data.updated_at,
@@ -158,9 +196,9 @@ export const updateTicket = async (ticketId: string, updates: Partial<SupportTic
     assigned_to: data.technician_id,
     title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled',
     description: data.description,
-    type: data.type,
-    priority: data.priority,
-    status: data.status,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
     scheduled_date: data.scheduled_date,
     created_at: data.created_at,
     updated_at: data.updated_at,

@@ -3,7 +3,6 @@
 export * from "./types";
 export * from "./ticket-api";
 export * from "./message-api";
-export * from "./notification-api";
 
 // Export functions with renamed aliases for compatibility with existing imports
 import { 

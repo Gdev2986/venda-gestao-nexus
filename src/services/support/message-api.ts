@@ -151,3 +151,38 @@ export const sendMessage = async (ticketId: string, message: string) => {
 
   return { data: transformedData, error: null };
 };
+
+// Mark messages as read
+export const markMessagesAsRead = async (ticketId: string, userId: string) => {
+  try {
+    // First get the conversation for this ticket
+    const { data: conversation, error: convError } = await supabase
+      .from('support_conversations')
+      .select('*')
+      .eq('support_request_id', ticketId)
+      .single();
+    
+    if (convError || !conversation) {
+      console.log('No conversation found for ticket:', ticketId);
+      return { error: convError };
+    }
+
+    // Mark all messages in this conversation as read for messages not from this user
+    const { error } = await supabase
+      .from('support_messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversation.id)
+      .neq('user_id', userId)
+      .eq('is_read', false);
+
+    if (error) {
+      console.error('Error marking messages as read:', error);
+      return { error };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Error in markMessagesAsRead:', error);
+    return { error };
+  }
+};
