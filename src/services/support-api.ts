@@ -22,7 +22,7 @@ export const getSupportTickets = async () => {
     id: item.id,
     client_id: item.client_id,
     assigned_to: item.technician_id, // Map technician_id to assigned_to
-    title: item.title,
+    title: item.title || item.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
     description: item.description,
     type: item.type as TicketType,
     priority: item.priority as TicketPriority,
@@ -59,7 +59,7 @@ export const getTicketById = async (ticketId: string) => {
     id: data.id,
     client_id: data.client_id,
     assigned_to: data.technician_id, // Map technician_id to assigned_to
-    title: data.title,
+    title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
     description: data.description,
     type: data.type as TicketType,
     priority: data.priority as TicketPriority,
@@ -79,7 +79,6 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
-      title: ticketData.title,
       description: ticketData.description,
       client_id: ticketData.client_id,
       type: ticketData.type as string, // Convert enum to string
@@ -103,7 +102,7 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
     id: data.id,
     client_id: data.client_id,
     assigned_to: data.technician_id, // Map technician_id to assigned_to
-    title: data.title,
+    title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
     description: data.description,
     type: data.type as TicketType,
     priority: data.priority as TicketPriority,
@@ -152,7 +151,7 @@ export const updateSupportTicket = async (ticketId: string, updates: Partial<Sup
     id: data.id,
     client_id: data.client_id,
     assigned_to: data.technician_id, // Map technician_id to assigned_to
-    title: data.title,
+    title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
     description: data.description,
     type: data.type as TicketType,
     priority: data.priority as TicketPriority,
