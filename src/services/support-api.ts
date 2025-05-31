@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams, TicketType, TicketPriority, TicketStatus } from "@/types/support.types";
 
@@ -79,6 +80,7 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
+      title: ticketData.title,
       description: ticketData.description,
       client_id: ticketData.client_id,
       type: ticketData.type as string, // Convert enum to string
