@@ -28,12 +28,20 @@ export const useOptimizedSales = () => {
   const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  
+  // Inicializar filtros com a data de ontem por padrão
+  const getYesterdayString = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  };
+
   const [filters, setFilters] = useState<SalesFilters>({
-    dateStart: optimizedSalesService.getYesterday(),
-    dateEnd: optimizedSalesService.getYesterday()
+    dateStart: getYesterdayString(),
+    dateEnd: getYesterdayString()
   });
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10); // Novo estado para o tamanho da página
+  const [pageSize, setPageSize] = useState<number>(10);
   
   // Ref para controlar se os filtros mudaram
   const previousFiltersRef = useRef<string>('');
@@ -173,8 +181,8 @@ export const useOptimizedSales = () => {
     if (salesSummary) {
       console.log('Metadata loaded, loading sales with yesterday filter');
       const initialFilters = {
-        dateStart: optimizedSalesService.getYesterday(),
-        dateEnd: optimizedSalesService.getYesterday()
+        dateStart: getYesterdayString(),
+        dateEnd: getYesterdayString()
       };
       setFilters(initialFilters);
       loadSales(1, initialFilters, true);
@@ -192,7 +200,7 @@ export const useOptimizedSales = () => {
   const changePage = useCallback((page: number) => {
     console.log('Changing to page via optimized RPC:', page, 'total pages:', salesData.totalPages);
     if (page >= 1 && page <= salesData.totalPages && page !== currentPage) {
-      loadSales(page, filters, false); // false = não forçar reload completo
+      loadSales(page, filters, false);
     }
   }, [loadSales, salesData.totalPages, currentPage, filters]);
 
@@ -204,11 +212,14 @@ export const useOptimizedSales = () => {
   }, [filters, loadSales]);
 
   const resetFilters = useCallback(() => {
-    console.log('Resetting filters to load all data');
-    const emptyFilters = {};
-    setFilters(emptyFilters);
+    console.log('Resetting filters to yesterday default');
+    const yesterdayFilters = {
+      dateStart: getYesterdayString(),
+      dateEnd: getYesterdayString()
+    };
+    setFilters(yesterdayFilters);
     setCurrentPage(1);
-    loadSales(1, emptyFilters, true);
+    loadSales(1, yesterdayFilters, true);
   }, [loadSales]);
 
   const refreshSales = useCallback(() => {

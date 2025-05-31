@@ -204,14 +204,14 @@ const OptimizedSalesTable = memo(({
               </Table>
             </div>
             
-            {/* Paginação Otimizada com Input para Página */}
+            {/* Paginação Otimizada com Input para Página e Seletor de Limite */}
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-4">
-                <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, totalCount)} de {totalCount.toLocaleString('pt-BR')} registros
+              <div className="flex flex-col gap-4 p-4 border-t">
+                <div className="text-sm text-muted-foreground text-center">
+                  Página {currentPage} de {totalPages} - {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, totalCount)} de {totalCount.toLocaleString('pt-BR')} registros ({pageSize} por página)
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   {/* Input para ir para página específica */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Ir para página:</span>
