@@ -8,7 +8,7 @@ import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePla
 import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
 import { BarChart } from "@/components/charts";
 import { useClientBalance } from "@/hooks/use-client-balance";
-import { useClientSales } from "@/hooks/use-client-sales";
+import { useClientSalesRealtime } from "@/hooks/use-client-sales-realtime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, DollarSign, BarChart3, TrendingUp } from "lucide-react";
@@ -19,26 +19,26 @@ import { PATHS } from "@/routes/paths";
 const generatePaymentMethodsData = (salesStats: any) => {
   console.log('generatePaymentMethodsData - Input stats:', salesStats);
   
-  const paymentMethods = salesStats.byPaymentMethod || {};
+  const paymentMethods = salesStats.payment_method_stats || {};
   
   return [
     {
       name: "PIX",
-      gross: paymentMethods['PIX']?.gross || paymentMethods['Pix']?.gross || 0,
-      net: paymentMethods['PIX']?.net || paymentMethods['Pix']?.net || 0,
-      taxes: paymentMethods['PIX']?.taxes || paymentMethods['Pix']?.taxes || 0,
+      gross: paymentMethods['PIX']?.gross || 0,
+      net: paymentMethods['PIX']?.net || 0,
+      taxes: paymentMethods['PIX']?.taxes || 0,
     },
     {
       name: "Débito", 
-      gross: paymentMethods['DEBIT']?.gross || paymentMethods['Cartão de Débito']?.gross || 0,
-      net: paymentMethods['DEBIT']?.net || paymentMethods['Cartão de Débito']?.net || 0,
-      taxes: paymentMethods['DEBIT']?.taxes || paymentMethods['Cartão de Débito']?.taxes || 0,
+      gross: paymentMethods['DEBIT']?.gross || 0,
+      net: paymentMethods['DEBIT']?.net || 0,
+      taxes: paymentMethods['DEBIT']?.taxes || 0,
     },
     {
       name: "Crédito",
-      gross: paymentMethods['CREDIT']?.gross || paymentMethods['Cartão de Crédito']?.gross || 0,
-      net: paymentMethods['CREDIT']?.net || paymentMethods['Cartão de Crédito']?.net || 0,
-      taxes: paymentMethods['CREDIT']?.taxes || paymentMethods['Cartão de Crédito']?.taxes || 0,
+      gross: paymentMethods['CREDIT']?.gross || 0,
+      net: paymentMethods['CREDIT']?.net || 0,
+      taxes: paymentMethods['CREDIT']?.taxes || 0,
     }
   ];
 };
@@ -48,7 +48,7 @@ const ClientDashboard = () => {
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
 
-  // Use the optimized client sales hook
+  // Use the new realtime hook
   const { 
     sales, 
     stats, 
@@ -58,12 +58,12 @@ const ClientDashboard = () => {
     isLoading: salesLoading, 
     error,
     changePage,
-    clientTaxBlock
-  } = useClientSales(periodStart, periodEnd);
+    clientId
+  } = useClientSalesRealtime(periodStart, periodEnd);
 
   console.log('ClientDashboard - Sales data:', sales);
   console.log('ClientDashboard - Stats:', stats);
-  console.log('ClientDashboard - Tax block:', clientTaxBlock);
+  console.log('ClientDashboard - Client ID:', clientId);
 
   // Generate payment methods data from real sales with net values
   const paymentMethodsData = generatePaymentMethodsData(stats);
@@ -78,7 +78,7 @@ const ClientDashboard = () => {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Bem-vindo ao seu painel de controle"
+        description="Bem-vindo ao seu painel de controle com atualizações em tempo real"
       />
 
       {/* Balance Card - always visible, no date filter */}
@@ -101,7 +101,7 @@ const ClientDashboard = () => {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Valor disponível para saque
+                Valor disponível para saque • Atualização automática
               </p>
             </div>
             <Button asChild>
@@ -193,14 +193,14 @@ const ClientDashboard = () => {
       {/* Cards de Estatísticas - Atualizados com taxas */}
       <ClientStatsCards
         currentBalance={balance || 0}
-        periodGross={stats.totalGross}
-        periodNet={stats.totalNet}
-        totalTransactions={stats.totalTransactions}
-        totalTaxes={stats.totalTaxes}
+        periodGross={stats.total_gross}
+        periodNet={stats.total_net}
+        totalTransactions={stats.total_transactions}
+        totalTaxes={stats.total_taxes}
         isLoading={salesLoading || balanceLoading}
       />
 
-      {/* Tabela de Vendas - usando a nova interface com valores líquidos */}
+      {/* Tabela de Vendas - usando dados em tempo real */}
       <ClientSalesTable
         sales={sales}
         totalCount={totalCount}

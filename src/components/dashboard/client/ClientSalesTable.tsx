@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,23 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { NormalizedSale } from "@/utils/sales-processor";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
 interface ClientSalesTableProps {
-  sales: NormalizedSale[];
+  sales: any[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
-}
-
-interface ExtendedSale extends NormalizedSale {
-  net_amount: number;
-  tax_amount?: number;
-  tax_rate?: number;
 }
 
 export const ClientSalesTable = ({ 
@@ -74,7 +66,14 @@ export const ClientSalesTable = ({
     if (!dateValue) return 'N/A';
     
     if (typeof dateValue === 'string') {
-      return dateValue;
+      const date = new Date(dateValue);
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
     
     if (dateValue instanceof Date) {
@@ -91,7 +90,7 @@ export const ClientSalesTable = ({
   };
 
   // Table columns with net amount and tax
-  const columns: ColumnDef<ExtendedSale>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       id: "transaction_date",
       header: "Data/Hora",
@@ -109,7 +108,7 @@ export const ClientSalesTable = ({
       header: "Código",
       cell: ({ row }) => (
         <span className="font-mono text-sm">
-          {row.original.id?.substring(0, 8) || 'N/A'}
+          {row.original.code?.substring(0, 8) || row.original.id?.substring(0, 8) || 'N/A'}
         </span>
       )
     },
@@ -135,8 +134,8 @@ export const ClientSalesTable = ({
       id: "tax_info",
       header: "Taxa",
       cell: ({ row }) => {
-        const taxRate = (row.original as ExtendedSale).tax_rate || 0;
-        const taxAmount = (row.original as ExtendedSale).tax_amount || 0;
+        const taxRate = row.original.tax_rate || 0;
+        const taxAmount = row.original.tax_amount || 0;
         return (
           <div className="text-center">
             <div className="text-xs text-muted-foreground">
@@ -154,7 +153,7 @@ export const ClientSalesTable = ({
       header: "Valor Líquido",
       cell: ({ row }) => (
         <span className="font-medium text-right text-green-600">
-          {formatCurrency((row.original as ExtendedSale).net_amount)}
+          {formatCurrency(row.original.net_amount)}
         </span>
       )
     },
@@ -171,14 +170,14 @@ export const ClientSalesTable = ({
 
   // Filter sales by search term
   const filteredSales = sales.filter(sale =>
-    sale.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sale.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.terminal?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate totals for current page
-  const currentPageGrossTotal = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  const currentPageNetTotal = filteredSales.reduce((sum, sale) => sum + ((sale as ExtendedSale).net_amount || 0), 0);
-  const currentPageTaxTotal = filteredSales.reduce((sum, sale) => sum + ((sale as ExtendedSale).tax_amount || 0), 0);
+  const currentPageGrossTotal = filteredSales.reduce((sum, sale) => sum + (sale.gross_amount || 0), 0);
+  const currentPageNetTotal = filteredSales.reduce((sum, sale) => sum + (sale.net_amount || 0), 0);
+  const currentPageTaxTotal = filteredSales.reduce((sum, sale) => sum + (sale.tax_amount || 0), 0);
 
   return (
     <Card className="border-l-4 border-l-emerald-500">
@@ -187,10 +186,10 @@ export const ClientSalesTable = ({
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <Filter className="h-5 w-5 text-emerald-600" />
-              Vendas Detalhadas
+              Vendas Detalhadas • Tempo Real
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {totalCount} transações encontradas
+              {totalCount} transações encontradas • Atualizações automáticas
             </p>
           </div>
           
@@ -230,7 +229,7 @@ export const ClientSalesTable = ({
       <CardContent className="p-0">
         <DataTable
           columns={columns}
-          data={filteredSales as ExtendedSale[]}
+          data={filteredSales}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}
