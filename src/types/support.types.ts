@@ -3,6 +3,9 @@
 export enum TicketType {
   MAINTENANCE = "MAINTENANCE",
   INSTALLATION = "INSTALLATION", 
+  REPAIR = "REPAIR",
+  TRAINING = "TRAINING",
+  SUPPORT = "SUPPORT",
   REPLACEMENT = "REPLACEMENT",
   SUPPLIES = "SUPPLIES",
   REMOVAL = "REMOVAL",
@@ -25,7 +28,7 @@ export enum TicketStatus {
 export interface SupportTicket {
   id: string;
   client_id: string;
-  technician_id?: string;
+  assigned_to?: string; // Changed from technician_id to match database
   title: string;
   description: string;
   type: TicketType;
@@ -55,7 +58,7 @@ export interface SupportMessage {
   conversation_id: string;
   user_id: string;
   message: string;
-  is_read: boolean;
+  is_read: boolean; // Made required to match usage
   created_at: string;
   user?: {
     name: string;
@@ -64,6 +67,7 @@ export interface SupportMessage {
 }
 
 export interface CreateTicketParams {
+  title: string; // Added missing title property
   description: string;
   type: TicketType;
   priority: TicketPriority;

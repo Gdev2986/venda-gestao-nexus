@@ -10,7 +10,7 @@ import {
   updateTicket 
 } from "@/services/support/ticket-api";
 import { getMessages } from "@/services/support/message-api";
-import { SupportTicket, SupportMessage, CreateTicketParams } from "@/services/support/types";
+import { SupportTicket, SupportMessage, CreateTicketParams, TicketStatus } from "@/types/support.types";
 
 export const useSupportSystem = () => {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -74,7 +74,14 @@ export const useSupportSystem = () => {
     try {
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Ensure messages have is_read property
+      const messagesWithReadStatus = (data || []).map(msg => ({
+        ...msg,
+        is_read: msg.is_read ?? false
+      }));
+      
+      setMessages(messagesWithReadStatus);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -116,7 +123,7 @@ export const useSupportSystem = () => {
   // Update ticket status
   const updateTicketStatus = useCallback(async (ticketId: string, status: string) => {
     try {
-      const { data, error } = await updateTicket(ticketId, { status });
+      const { data, error } = await updateTicket(ticketId, { status: status as TicketStatus });
       if (error) throw error;
       
       await loadTickets(); // Refresh tickets list
@@ -142,7 +149,7 @@ export const useSupportSystem = () => {
     try {
       const { data, error } = await updateTicket(ticketId, { 
         assigned_to: technicianId,
-        status: 'IN_PROGRESS'
+        status: TicketStatus.IN_PROGRESS
       });
       if (error) throw error;
       

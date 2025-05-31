@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { SupportMessage } from "@/types/support.types";
+import { SupportMessage } from "@/types/support.types"; // Use consistent types
 import { getMessages, sendMessage, markMessagesAsRead } from "@/services/support/message-api";
 
 interface UseSupportChatRealtimeProps {
@@ -30,7 +30,13 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
       
-      setMessages(data || []);
+      // Ensure all messages have is_read property
+      const messagesWithReadStatus = (data || []).map(msg => ({
+        ...msg,
+        is_read: msg.is_read ?? false
+      }));
+      
+      setMessages(messagesWithReadStatus);
       
       // Mark messages as read if user is viewing the chat
       if (user?.id && isOpen) {
@@ -68,18 +74,21 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
         (payload) => {
           console.log('📩 New message received:', payload.new);
           
-          const newMessage = payload.new as SupportMessage;
+          const newMessage = payload.new as any;
           
-          // Add the new message to the state
+          // Add the new message to the state with proper type conversion
           setMessages(prev => {
             // Check if message already exists to avoid duplicates
             const exists = prev.some(msg => msg.id === newMessage.id);
             if (exists) return prev;
             
-            return [...prev, {
+            const messageWithReadStatus: SupportMessage = {
               ...newMessage,
+              is_read: newMessage.is_read ?? false,
               ticket_id: newMessage.conversation_id // Map for compatibility
-            }];
+            };
+            
+            return [...prev, messageWithReadStatus];
           });
 
           // Show notification if message is from someone else
