@@ -137,9 +137,9 @@ export const TicketStatusManager = ({
           </Button>
         )}
 
-        {ticket.technician_id && (
+        {ticket.assigned_to && (
           <div className="text-xs text-muted-foreground">
-            Técnico: {ticket.technician_id === user?.id ? "Você" : ticket.technician_id}
+            Técnico: {ticket.assigned_to === user?.id ? "Você" : ticket.assigned_to}
           </div>
         )}
       </CardContent>

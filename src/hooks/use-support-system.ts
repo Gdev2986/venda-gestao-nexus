@@ -75,10 +75,14 @@ export const useSupportSystem = () => {
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
       
-      // Ensure messages have is_read property
+      // Ensure messages have is_read property and compatible user data
       const messagesWithReadStatus = (data || []).map(msg => ({
         ...msg,
-        is_read: msg.is_read ?? false
+        is_read: msg.is_read ?? false,
+        user: msg.user ? {
+          name: msg.user.name || 'Usuário',
+          email: msg.user.email || undefined
+        } : undefined
       }));
       
       setMessages(messagesWithReadStatus);

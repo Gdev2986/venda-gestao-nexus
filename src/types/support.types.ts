@@ -62,7 +62,7 @@ export interface SupportMessage {
   created_at: string;
   user?: {
     name: string;
-    email: string;
+    email?: string; // Made optional to handle different data sources
   };
 }
 

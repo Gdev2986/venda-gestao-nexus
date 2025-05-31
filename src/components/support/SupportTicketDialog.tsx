@@ -50,6 +50,7 @@ export const SupportTicketDialog = ({
 
     try {
       const ticketData: CreateTicketParams = {
+        title: formData.title, // Now includes title
         description: formData.description,
         type: formData.type,
         priority: formData.priority,
@@ -172,7 +173,7 @@ export const SupportTicketDialog = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.description}>
+            <Button type="submit" disabled={isLoading || !formData.description || !formData.title}>
               {isLoading ? "Criando..." : "Criar Chamado"}
             </Button>
           </div>

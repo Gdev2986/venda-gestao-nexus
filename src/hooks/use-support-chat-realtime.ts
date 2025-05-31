@@ -30,10 +30,14 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
       
-      // Ensure all messages have is_read property
+      // Ensure all messages have is_read property and compatible user data
       const messagesWithReadStatus = (data || []).map(msg => ({
         ...msg,
-        is_read: msg.is_read ?? false
+        is_read: msg.is_read ?? false,
+        user: msg.user ? {
+          name: msg.user.name || 'Usuário',
+          email: msg.user.email || undefined
+        } : undefined
       }));
       
       setMessages(messagesWithReadStatus);
@@ -85,7 +89,10 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
             const messageWithReadStatus: SupportMessage = {
               ...newMessage,
               is_read: newMessage.is_read ?? false,
-              ticket_id: newMessage.conversation_id // Map for compatibility
+              user: newMessage.user ? {
+                name: newMessage.user.name || 'Usuário',
+                email: newMessage.user.email || undefined
+              } : undefined
             };
             
             return [...prev, messageWithReadStatus];
