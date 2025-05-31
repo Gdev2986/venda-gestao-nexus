@@ -69,6 +69,25 @@ export const ClientFeePlanDisplay = () => {
     }
   };
 
+  // Função para ordenar as taxas na ordem correta: PIX, DEBIT, CREDIT (1x-18x)
+  const getSortedRates = () => {
+    if (!taxBlock?.rates) return [];
+
+    return taxBlock.rates.sort((a, b) => {
+      // Primeiro ordenar por método de pagamento
+      const methodOrder = { 'PIX': 1, 'DEBIT': 2, 'CREDIT': 3 };
+      const methodA = methodOrder[a.payment_method as keyof typeof methodOrder] || 99;
+      const methodB = methodOrder[b.payment_method as keyof typeof methodOrder] || 99;
+      
+      if (methodA !== methodB) {
+        return methodA - methodB;
+      }
+      
+      // Depois ordenar por parcelas dentro do mesmo método
+      return a.installment - b.installment;
+    });
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -90,19 +109,7 @@ export const ClientFeePlanDisplay = () => {
     );
   }
 
-  // Organizar taxas por método de pagamento
-  const groupedRates = taxBlock.rates?.reduce((acc, rate) => {
-    if (!acc[rate.payment_method]) {
-      acc[rate.payment_method] = [];
-    }
-    acc[rate.payment_method].push(rate);
-    return acc;
-  }, {} as Record<string, typeof taxBlock.rates>) || {};
-
-  // Ordenar taxas dentro de cada método por número de parcelas
-  Object.keys(groupedRates).forEach(method => {
-    groupedRates[method].sort((a, b) => a.installment - b.installment);
-  });
+  const sortedRates = getSortedRates();
 
   return (
     <Card>
@@ -136,22 +143,20 @@ export const ClientFeePlanDisplay = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(groupedRates).map(([method, rates]) =>
-                      rates.map((rate, index) => (
-                        <TableRow key={`${method}-${rate.installment}`}>
-                          <TableCell>
-                            <Badge 
-                              variant="secondary" 
-                              className={getPaymentMethodColor(method)}
-                            >
-                              {getPaymentMethodLabel(method)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{rate.installment}x</TableCell>
-                          <TableCell className="font-medium">{rate.final_rate}%</TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                    {sortedRates.map((rate, index) => (
+                      <TableRow key={`${rate.payment_method}-${rate.installment}-${index}`}>
+                        <TableCell>
+                          <Badge 
+                            variant="secondary" 
+                            className={getPaymentMethodColor(rate.payment_method)}
+                          >
+                            {getPaymentMethodLabel(rate.payment_method)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{rate.installment}x</TableCell>
+                        <TableCell className="font-medium">{rate.final_rate}%</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>
@@ -166,29 +171,24 @@ export const ClientFeePlanDisplay = () => {
             <span className="font-medium">{taxBlock.rates?.length || 0} modalidades</span>
           </div>
           
-          {/* Resumo das taxas - mostrar apenas algumas principais */}
+          {/* Resumo das taxas - mostrar principais em ordem correta */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Principais taxas:</h4>
             <div className="space-y-1">
-              {Object.entries(groupedRates).slice(0, 3).map(([method, rates]) => {
-                const firstRate = rates[0];
-                if (!firstRate) return null;
-                
-                return (
-                  <div key={method} className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="secondary" 
-                        className={`${getPaymentMethodColor(method)} text-xs`}
-                      >
-                        {getPaymentMethodLabel(method)}
-                      </Badge>
-                      <span>{firstRate.installment}x</span>
-                    </div>
-                    <span className="font-medium">{firstRate.final_rate}%</span>
+              {sortedRates.slice(0, 5).map((rate) => (
+                <div key={`${rate.payment_method}-${rate.installment}`} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="secondary" 
+                      className={`${getPaymentMethodColor(rate.payment_method)} text-xs`}
+                    >
+                      {getPaymentMethodLabel(rate.payment_method)}
+                    </Badge>
+                    <span>{rate.installment}x</span>
                   </div>
-                );
-              })}
+                  <span className="font-medium">{rate.final_rate}%</span>
+                </div>
+              ))}
             </div>
           </div>
           
