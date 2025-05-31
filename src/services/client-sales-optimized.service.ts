@@ -30,7 +30,7 @@ export interface ClientSalesStats {
 }
 
 export const clientSalesOptimizedService = {
-  // Buscar terminais do cliente de forma simplificada
+  // Buscar terminais do cliente de forma corrigida
   async getClientTerminals(clientId: string): Promise<string[]> {
     try {
       console.log('[DEBUG] getClientTerminals - Starting for client:', clientId);
@@ -58,15 +58,21 @@ export const clientSalesOptimizedService = {
         return [];
       }
 
-      // Extrair IDs das máquinas
+      // Extrair IDs das máquinas corretamente
       const machineIds = machines.map(m => m.id);
       console.log('[DEBUG] getClientTerminals - Machine IDs:', machineIds);
+
+      // Verificar se temos IDs válidos antes de fazer a query
+      if (machineIds.length === 0) {
+        console.log('[DEBUG] getClientTerminals - No valid machine IDs');
+        return [];
+      }
 
       // Buscar terminais únicos das vendas dessas máquinas
       const { data: sales, error: salesError } = await supabase
         .from('sales')
         .select('terminal')
-        .in('machine_id', machineIds);
+        .in('machine_id', machineIds); // Agora com array válido
 
       console.log('[DEBUG] getClientTerminals - Sales query result:', { 
         sales, 
@@ -176,7 +182,7 @@ export const clientSalesOptimizedService = {
     return { netAmount, taxAmount, taxRate: defaultRate };
   },
 
-  // Buscar vendas do cliente usando get_sales_optimized - seguindo padrão do admin
+  // Buscar vendas do cliente com lógica de data corrigida
   async getClientSalesWithTaxes(
     clientId: string,
     startDate?: string,
@@ -199,7 +205,7 @@ export const clientSalesOptimizedService = {
       if (terminals.length === 0) {
         console.log('[DEBUG] getClientSalesWithTaxes - No terminals found, implementing fallback strategy');
         
-        // Fallback: buscar máquinas diretamente
+        // Fallback: buscar máquinas diretamente e suas vendas
         const { data: machines, error: machinesError } = await supabase
           .from('machines')
           .select('id, serial_number')
@@ -208,17 +214,27 @@ export const clientSalesOptimizedService = {
         console.log('[DEBUG] getClientSalesWithTaxes - Fallback machines found:', machines?.length || 0);
 
         if (!machinesError && machines && machines.length > 0) {
-          // Buscar vendas por machine_id diretamente
           const machineIds = machines.map(m => m.id);
-          const { data: directSales, error: directSalesError } = await supabase
+          
+          // Buscar vendas sem filtro de data primeiro para ver se existem dados
+          let salesQuery = supabase
             .from('sales')
             .select('*')
             .in('machine_id', machineIds);
 
+          // Só aplicar filtros de data se fornecidos
+          if (startDate) {
+            salesQuery = salesQuery.gte('date', `${startDate}T00:00:00.000Z`);
+          }
+          if (endDate) {
+            salesQuery = salesQuery.lte('date', `${endDate}T23:59:59.999Z`);
+          }
+
+          const { data: directSales, error: directSalesError } = await salesQuery;
+
           console.log('[DEBUG] getClientSalesWithTaxes - Fallback sales found:', directSales?.length || 0);
 
           if (!directSalesError && directSales) {
-            // Processar vendas encontradas diretamente
             const taxConfig = await this.getClientTaxConfig(clientId);
             
             const sales = directSales.map((sale: any) => {
@@ -265,9 +281,27 @@ export const clientSalesOptimizedService = {
       const taxConfig = await this.getClientTaxConfig(clientId);
       console.log('[DEBUG] getClientSalesWithTaxes - Tax config loaded:', !!taxConfig);
 
-      // 3. Usar get_sales_optimized exatamente como o admin faz
-      console.log('[DEBUG] getClientSalesWithTaxes - Calling get_sales_optimized with terminals:', terminals);
+      // 3. Tentar usar get_sales_optimized sem filtros primeiro para debug
+      console.log('[DEBUG] getClientSalesWithTaxes - Testing RPC without date filters first');
       
+      const { data: testData, error: testError } = await supabase.rpc('get_sales_optimized', {
+        page_number: 1,
+        page_size: 10,
+        filter_date_start: null,
+        filter_date_end: null,
+        filter_hour_start: null,
+        filter_hour_end: null,
+        filter_terminals: terminals,
+        filter_payment_type: null,
+        filter_source: null
+      });
+
+      console.log('[DEBUG] getClientSalesWithTaxes - Test RPC result:', { 
+        dataCount: testData?.length || 0, 
+        error: testError
+      });
+
+      // 4. Agora usar com filtros se o teste funcionou
       const { data, error } = await supabase.rpc('get_sales_optimized', {
         page_number: page,
         page_size: pageSize,
@@ -280,14 +314,15 @@ export const clientSalesOptimizedService = {
         filter_source: null
       });
 
-      console.log('[DEBUG] getClientSalesWithTaxes - RPC result:', { 
+      console.log('[DEBUG] getClientSalesWithTaxes - Final RPC result:', { 
         dataCount: data?.length || 0, 
         error,
         firstSale: data?.[0] ? {
           id: data[0].id,
           terminal: data[0].terminal,
           gross_amount: data[0].gross_amount,
-          payment_method: data[0].payment_method
+          payment_method: data[0].payment_method,
+          date: data[0].date
         } : null
       });
 
@@ -309,7 +344,7 @@ export const clientSalesOptimizedService = {
       const totalCount = data[0]?.total_count || 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
-      // 4. Processar vendas com cálculo de taxas
+      // 5. Processar vendas com cálculo de taxas
       const sales = data.map((sale: any) => {
         const { netAmount, taxAmount, taxRate } = this.calculateNetAmount(
           Number(sale.gross_amount),
@@ -340,7 +375,8 @@ export const clientSalesOptimizedService = {
         sampleSale: sales[0] ? {
           terminal: sales[0].terminal,
           gross_amount: sales[0].gross_amount,
-          net_amount: sales[0].net_amount
+          net_amount: sales[0].net_amount,
+          date: sales[0].transaction_date
         } : null
       });
 

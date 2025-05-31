@@ -18,6 +18,20 @@ interface ExtendedSale {
   installments: number;
 }
 
+// Função para obter a data de ontem
+const getYesterday = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday;
+};
+
+// Função para obter uma semana atrás
+const getLastWeek = () => {
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  return lastWeek;
+};
+
 export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
   const [sales, setSales] = useState<ExtendedSale[]>([]);
   const [stats, setStats] = useState<ClientSalesStats>({
@@ -64,8 +78,20 @@ export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
     setError(null);
 
     try {
-      const dateStart = startDate?.toISOString().split('T')[0];
-      const dateEnd = endDate?.toISOString().split('T')[0];
+      // Se não há filtros de data, usar últimos 7 dias como padrão para não sobrecarregar
+      let dateStart: string | undefined;
+      let dateEnd: string | undefined;
+
+      if (!startDate && !endDate) {
+        // Usar últimos 7 dias como padrão
+        dateStart = getLastWeek().toISOString().split('T')[0];
+        dateEnd = getYesterday().toISOString().split('T')[0];
+        console.log('[DEBUG] Using default date range:', { dateStart, dateEnd });
+      } else {
+        dateStart = startDate?.toISOString().split('T')[0];
+        dateEnd = endDate?.toISOString().split('T')[0];
+        console.log('[DEBUG] Using provided date range:', { dateStart, dateEnd });
+      }
 
       // Buscar vendas e estatísticas em paralelo
       const [salesResult, statsResult] = await Promise.all([
@@ -91,7 +117,8 @@ export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
 
       console.log('Client sales loaded:', {
         salesCount: salesResult.sales.length,
-        stats: statsResult
+        stats: statsResult,
+        dateRange: { dateStart, dateEnd }
       });
 
     } catch (err) {

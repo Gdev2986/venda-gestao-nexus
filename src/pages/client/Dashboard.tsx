@@ -11,9 +11,10 @@ import { useClientBalance } from "@/hooks/use-client-balance";
 import { useClientSalesRealtime } from "@/hooks/use-client-sales-realtime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, DollarSign, BarChart3, TrendingUp } from "lucide-react";
+import { Wallet, DollarSign, BarChart3, TrendingUp, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Generate payment methods data for vertical bar chart with net values
 const generatePaymentMethodsData = (salesStats: any) => {
@@ -43,10 +44,26 @@ const generatePaymentMethodsData = (salesStats: any) => {
   ];
 };
 
+// Função para obter ontem
+const getYesterday = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday;
+};
+
+// Função para obter uma semana atrás
+const getLastWeek = () => {
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  return lastWeek;
+};
+
 const ClientDashboard = () => {
   const { balance, isLoading: balanceLoading } = useClientBalance();
-  const [periodStart, setPeriodStart] = useState<Date>();
-  const [periodEnd, setPeriodEnd] = useState<Date>();
+  
+  // Inicializar com últimos 7 dias como padrão
+  const [periodStart, setPeriodStart] = useState<Date>(getLastWeek());
+  const [periodEnd, setPeriodEnd] = useState<Date>(getYesterday());
 
   // Use the new realtime hook
   const { 
@@ -64,6 +81,7 @@ const ClientDashboard = () => {
   console.log('ClientDashboard - Sales data:', sales);
   console.log('ClientDashboard - Stats:', stats);
   console.log('ClientDashboard - Client ID:', clientId);
+  console.log('ClientDashboard - Date range:', { periodStart, periodEnd });
 
   // Generate payment methods data from real sales with net values
   const paymentMethodsData = generatePaymentMethodsData(stats);
@@ -80,6 +98,17 @@ const ClientDashboard = () => {
         title="Dashboard"
         description="Bem-vindo ao seu painel de controle com atualizações em tempo real"
       />
+
+      {/* Informativo sobre filtro de data padrão */}
+      <Alert className="border-blue-500/20 bg-blue-50 dark:bg-blue-950/20">
+        <Info className="h-4 w-4 text-blue-500" />
+        <AlertDescription>
+          <strong className="text-blue-700 dark:text-blue-300">Período Padrão:</strong>{' '}
+          <span className="text-blue-600 dark:text-blue-400">
+            Exibindo dados dos últimos 7 dias (até ontem). Use o filtro abaixo para alterar o período.
+          </span>
+        </AlertDescription>
+      </Alert>
 
       {/* Balance Card - always visible, no date filter */}
       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 border-l-4 border-l-primary">
