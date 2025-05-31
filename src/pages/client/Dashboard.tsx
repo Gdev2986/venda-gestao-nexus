@@ -11,46 +11,34 @@ import { useClientBalance } from "@/hooks/use-client-balance";
 import { useClientSales } from "@/hooks/use-client-sales";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, DollarSign, BarChart3 } from "lucide-react";
+import { Wallet, DollarSign, BarChart3, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 
-// Generate payment methods data for vertical bar chart
-const generatePaymentMethodsData = (sales: any[]) => {
-  console.log('generatePaymentMethodsData - Input sales:', sales);
+// Generate payment methods data for vertical bar chart with net values
+const generatePaymentMethodsData = (salesStats: any) => {
+  console.log('generatePaymentMethodsData - Input stats:', salesStats);
   
-  const methodCounts = sales.reduce((acc: Record<string, number>, sale: any) => {
-    const method = sale.payment_type || sale.payment_method;
-    const amount = Number(sale.gross_amount) || 0;
-    acc[method] = (acc[method] || 0) + amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  console.log('Method counts:', methodCounts);
-
-  const total = Number(Object.values(methodCounts).reduce((sum: number, amount: number) => {
-    return sum + amount;
-  }, 0));
-
-  const pixAmount = Number(methodCounts['PIX'] || methodCounts['Pix'] || 0);
-  const debitAmount = Number(methodCounts['DEBIT'] || methodCounts['Cartão de Débito'] || 0);
-  const creditAmount = Number(methodCounts['CREDIT'] || methodCounts['Cartão de Crédito'] || 0);
-
+  const paymentMethods = salesStats.byPaymentMethod || {};
+  
   return [
     {
       name: "PIX",
-      value: pixAmount,
-      percent: total > 0 ? Math.round((pixAmount / total) * 100) : 0
+      gross: paymentMethods['PIX']?.gross || paymentMethods['Pix']?.gross || 0,
+      net: paymentMethods['PIX']?.net || paymentMethods['Pix']?.net || 0,
+      taxes: paymentMethods['PIX']?.taxes || paymentMethods['Pix']?.taxes || 0,
     },
     {
       name: "Débito", 
-      value: debitAmount,
-      percent: total > 0 ? Math.round((debitAmount / total) * 100) : 0
+      gross: paymentMethods['DEBIT']?.gross || paymentMethods['Cartão de Débito']?.gross || 0,
+      net: paymentMethods['DEBIT']?.net || paymentMethods['Cartão de Débito']?.net || 0,
+      taxes: paymentMethods['DEBIT']?.taxes || paymentMethods['Cartão de Débito']?.taxes || 0,
     },
     {
       name: "Crédito",
-      value: creditAmount,
-      percent: total > 0 ? Math.round((creditAmount / total) * 100) : 0
+      gross: paymentMethods['CREDIT']?.gross || paymentMethods['Cartão de Crédito']?.gross || 0,
+      net: paymentMethods['CREDIT']?.net || paymentMethods['Cartão de Crédito']?.net || 0,
+      taxes: paymentMethods['CREDIT']?.taxes || paymentMethods['Cartão de Crédito']?.taxes || 0,
     }
   ];
 };
@@ -69,16 +57,16 @@ const ClientDashboard = () => {
     currentPage,
     isLoading: salesLoading, 
     error,
-    changePage
+    changePage,
+    clientTaxBlock
   } = useClientSales(periodStart, periodEnd);
 
   console.log('ClientDashboard - Sales data:', sales);
   console.log('ClientDashboard - Stats:', stats);
-  console.log('ClientDashboard - Total count:', totalCount);
-  console.log('ClientDashboard - Error:', error);
+  console.log('ClientDashboard - Tax block:', clientTaxBlock);
 
-  // Generate payment methods data from real sales
-  const paymentMethodsData = generatePaymentMethodsData(sales);
+  // Generate payment methods data from real sales with net values
+  const paymentMethodsData = generatePaymentMethodsData(stats);
 
   const handlePeriodChange = (startDate: Date, endDate: Date) => {
     console.log('Period changed:', { startDate, endDate });
@@ -143,45 +131,76 @@ const ClientDashboard = () => {
         </Card>
       )}
 
-      {/* Payment Methods Bar Chart */}
-      <Card className="border-l-4 border-l-blue-500">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Vendas por Método de Pagamento
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {salesLoading ? (
-            <div className="h-[300px] bg-muted animate-pulse rounded-lg" />
-          ) : (
-            <BarChart
-              data={paymentMethodsData}
-              xAxisKey="name"
-              dataKey="value"
-              height={300}
-              colors={["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))"]}
-              formatter={(value) =>
-                new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(value)
-              }
-            />
-          )}
-        </CardContent>
-      </Card>
+      {/* Payment Methods Charts - Bruto vs Líquido */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Faturamento Bruto por Método
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {salesLoading ? (
+              <div className="h-[300px] bg-muted animate-pulse rounded-lg" />
+            ) : (
+              <BarChart
+                data={paymentMethodsData}
+                xAxisKey="name"
+                dataKey="gross"
+                height={300}
+                colors={["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))"]}
+                formatter={(value) =>
+                  new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(value)
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Cards de Estatísticas */}
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Faturamento Líquido por Método
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {salesLoading ? (
+              <div className="h-[300px] bg-muted animate-pulse rounded-lg" />
+            ) : (
+              <BarChart
+                data={paymentMethodsData}
+                xAxisKey="name"
+                dataKey="net"
+                height={300}
+                colors={["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))"]}
+                formatter={(value) =>
+                  new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(value)
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cards de Estatísticas - Atualizados com taxas */}
       <ClientStatsCards
         currentBalance={balance || 0}
         periodGross={stats.totalGross}
         periodNet={stats.totalNet}
         totalTransactions={stats.totalTransactions}
+        totalTaxes={stats.totalTaxes}
         isLoading={salesLoading || balanceLoading}
       />
 
-      {/* Tabela de Vendas - usando a nova interface otimizada */}
+      {/* Tabela de Vendas - usando a nova interface com valores líquidos */}
       <ClientSalesTable
         sales={sales}
         totalCount={totalCount}

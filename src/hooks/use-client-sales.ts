@@ -1,224 +1,234 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { clientSalesService, ClientSalesFilters } from '@/services/client-sales.service';
-import { NormalizedSale } from '@/utils/sales-processor';
-import { SalesDateRange } from '@/services/optimized-sales.service';
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { clientSalesService, ClientSalesFilters } from "@/services/client-sales.service";
+import { TaxBlocksService } from "@/services/tax-blocks.service";
+import { NormalizedSale } from "@/utils/sales-processor";
 
-export interface ClientSalesStats {
+interface ClientSalesStats {
+  totalTransactions: number;
   totalGross: number;
   totalNet: number;
-  totalTransactions: number;
-  avgTicket: number;
+  totalTaxes: number;
+  byPaymentMethod: {
+    [key: string]: {
+      gross: number;
+      net: number;
+      taxes: number;
+      count: number;
+    }
+  };
 }
 
 export const useClientSales = (startDate?: Date, endDate?: Date) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
   const [sales, setSales] = useState<NormalizedSale[]>([]);
   const [stats, setStats] = useState<ClientSalesStats>({
+    totalTransactions: 0,
     totalGross: 0,
     totalNet: 0,
-    totalTransactions: 0,
-    avgTicket: 0
+    totalTaxes: 0,
+    byPaymentMethod: {}
   });
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [clientId, setClientId] = useState<string | null>(null);
+  const [clientTaxBlock, setClientTaxBlock] = useState<any>(null);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // Get client ID for current user
-  const fetchClientId = useCallback(async () => {
-    if (!user?.id) {
-      console.log('useClientSales: No user ID available');
-      return null;
-    }
+  // Buscar bloco de taxas do cliente
+  const loadClientTaxBlock = useCallback(async () => {
+    if (!user?.id) return;
 
     try {
-      console.log('useClientSales: Fetching client access for user:', user.id);
-      const { data: clientAccess, error: accessError } = await supabase
+      const { data: clientAccess } = await supabase
         .from('user_client_access')
         .select('client_id')
         .eq('user_id', user.id)
         .single();
 
-      if (accessError) {
-        console.error('useClientSales: Error fetching client access:', accessError);
-        throw accessError;
-      }
-      
-      if (!clientAccess) {
-        throw new Error('Cliente não encontrado');
-      }
+      if (!clientAccess) return;
 
-      console.log('useClientSales: Found client ID:', clientAccess.client_id);
-      return clientAccess.client_id;
-    } catch (err) {
-      console.error('useClientSales: Error in fetchClientId:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao buscar cliente');
-      return null;
+      const taxBlock = await TaxBlocksService.getClientTaxBlock(clientAccess.client_id);
+      setClientTaxBlock(taxBlock);
+    } catch (error) {
+      console.error('Erro ao carregar bloco de taxas:', error);
     }
   }, [user?.id]);
 
-  // Load metadata
-  const loadMetadata = useCallback(async () => {
-    try {
-      const [dateRangeData, datesData] = await Promise.all([
-        clientSalesService.getDateRange(),
-        clientSalesService.getDatesWithSales()
-      ]);
-
-      setDateRange(dateRangeData);
-      setAvailableDates(datesData);
-    } catch (error) {
-      console.error('useClientSales: Error loading metadata:', error);
+  // Calcular valor líquido baseado na taxa
+  const calculateNetValue = useCallback((sale: NormalizedSale): { net: number; tax: number; rate: number } => {
+    if (!clientTaxBlock?.rates) {
+      return { net: sale.gross_amount, tax: 0, rate: 0 };
     }
-  }, []);
 
-  // Load sales using optimized service
+    // Mapear tipo de pagamento para encontrar a taxa
+    let paymentMethod = '';
+    if (sale.payment_type === 'PIX' || sale.payment_type === 'Pix') {
+      paymentMethod = 'PIX';
+    } else if (sale.payment_type === 'Cartão de Débito' || sale.payment_type === 'DEBIT') {
+      paymentMethod = 'DEBIT';
+    } else if (sale.payment_type === 'Cartão de Crédito' || sale.payment_type === 'CREDIT') {
+      paymentMethod = 'CREDIT';
+    }
+
+    const taxRate = clientTaxBlock.rates.find((rate: any) => 
+      rate.payment_method === paymentMethod && 
+      rate.installment === (sale.installments || 1)
+    );
+
+    if (!taxRate) {
+      return { net: sale.gross_amount, tax: 0, rate: 0 };
+    }
+
+    const rateValue = taxRate.final_rate / 100;
+    const taxAmount = sale.gross_amount * rateValue;
+    const netAmount = sale.gross_amount - taxAmount;
+
+    return { 
+      net: netAmount, 
+      tax: taxAmount, 
+      rate: taxRate.final_rate 
+    };
+  }, [clientTaxBlock]);
+
+  // Carregar vendas com cálculos de taxa
   const loadSales = useCallback(async (page: number = 1) => {
-    if (!clientId) {
-      console.log('useClientSales: No client ID, skipping sales fetch');
-      return;
-    }
+    if (!user?.id) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Build filters from date range
+      // Buscar client_id
+      const { data: clientAccess } = await supabase
+        .from('user_client_access')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!clientAccess) {
+        setError('Cliente não encontrado');
+        return;
+      }
+
+      // Preparar filtros
       const filters: ClientSalesFilters = {};
-      
       if (startDate) {
         filters.dateStart = startDate.toISOString().split('T')[0];
       }
-      
       if (endDate) {
         filters.dateEnd = endDate.toISOString().split('T')[0];
       }
 
-      console.log('useClientSales: Loading sales with filters:', filters, 'page:', page);
-      
-      // Use client sales service
+      // Buscar vendas
       const result = await clientSalesService.getClientSalesPaginated(
-        clientId,
+        clientAccess.client_id,
         page,
-        1000,
+        1000, // Buscar muitos para cálculos
         filters
       );
 
-      console.log('useClientSales: Raw result from service:', result);
+      // Calcular valores líquidos e estatísticas
+      const salesWithNet = result.sales.map(sale => {
+        const { net, tax, rate } = calculateNetValue(sale);
+        return {
+          ...sale,
+          net_amount: net,
+          tax_amount: tax,
+          tax_rate: rate
+        };
+      });
 
-      setSales(result.sales);
+      // Calcular estatísticas agregadas
+      const newStats: ClientSalesStats = {
+        totalTransactions: result.totalCount,
+        totalGross: 0,
+        totalNet: 0,
+        totalTaxes: 0,
+        byPaymentMethod: {}
+      };
+
+      salesWithNet.forEach(sale => {
+        newStats.totalGross += sale.gross_amount;
+        newStats.totalNet += sale.net_amount;
+        newStats.totalTaxes += sale.tax_amount || 0;
+
+        const method = sale.payment_type;
+        if (!newStats.byPaymentMethod[method]) {
+          newStats.byPaymentMethod[method] = {
+            gross: 0,
+            net: 0,
+            taxes: 0,
+            count: 0
+          };
+        }
+
+        newStats.byPaymentMethod[method].gross += sale.gross_amount;
+        newStats.byPaymentMethod[method].net += sale.net_amount;
+        newStats.byPaymentMethod[method].taxes += sale.tax_amount || 0;
+        newStats.byPaymentMethod[method].count += 1;
+      });
+
+      setSales(salesWithNet);
+      setStats(newStats);
       setTotalCount(result.totalCount);
       setTotalPages(result.totalPages);
-      setCurrentPage(result.currentPage);
+      setCurrentPage(page);
 
-      // Calculate stats from current page results
-      const totalGross = result.sales.reduce((sum, sale) => {
-        const grossAmount = Number(sale.gross_amount) || 0;
-        console.log('Processing sale gross amount:', sale.gross_amount, 'converted to:', grossAmount);
-        return sum + grossAmount;
-      }, 0);
-      
-      // For net amount, we'll calculate it as gross minus estimated fees (simplified calculation)
-      const totalNet = result.sales.reduce((sum, sale) => {
-        const grossAmount = Number(sale.gross_amount) || 0;
-        // Simple estimation: net = gross - 3% fee
-        const netAmount = grossAmount * 0.97;
-        return sum + netAmount;
-      }, 0);
-      
-      const totalTransactions = result.sales.length;
-      const avgTicket = totalTransactions > 0 ? totalGross / totalTransactions : 0;
-
-      setStats({
-        totalGross,
-        totalNet,
-        totalTransactions,
-        avgTicket
+      console.log('Client sales loaded:', {
+        salesCount: salesWithNet.length,
+        totalGross: newStats.totalGross,
+        totalNet: newStats.totalNet,
+        totalTaxes: newStats.totalTaxes
       });
-
-      console.log('useClientSales: Calculated stats:', {
-        totalGross,
-        totalNet,
-        totalTransactions,
-        avgTicket
-      });
-
-      if (result.totalCount > 0) {
-        toast({
-          title: "Vendas carregadas",
-          description: `${result.totalCount} vendas encontradas.`
-        });
-      }
 
     } catch (err) {
-      console.error('useClientSales: Error loading sales:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar vendas');
-      setSales([]);
-      setStats({ totalGross: 0, totalNet: 0, totalTransactions: 0, avgTicket: 0 });
+      console.error('Erro ao carregar vendas:', err);
+      setError('Erro ao carregar vendas do cliente');
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as vendas",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, startDate, endDate, toast]);
+  }, [user?.id, startDate, endDate, calculateNetValue, toast]);
 
-  // Change page
+  // Mudança de página
   const changePage = useCallback((page: number) => {
-    console.log('useClientSales: Changing to page:', page);
-    if (page >= 1 && page <= totalPages) {
-      loadSales(page);
+    setCurrentPage(page);
+    loadSales(page);
+  }, [loadSales]);
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    if (user?.id) {
+      loadClientTaxBlock();
     }
-  }, [loadSales, totalPages]);
+  }, [user?.id, loadClientTaxBlock]);
 
-  // Refresh
-  const refetch = useCallback(() => {
-    console.log('useClientSales: Manual refresh requested');
-    loadMetadata();
-    loadSales(1);
-  }, [loadMetadata, loadSales]);
-
-  // Initialize client ID
   useEffect(() => {
-    if (user?.id && !clientId) {
-      fetchClientId().then(setClientId);
-    }
-  }, [user?.id, clientId, fetchClientId]);
-
-  // Load metadata on mount
-  useEffect(() => {
-    loadMetadata();
-  }, [loadMetadata]);
-
-  // Load sales when dependencies change
-  useEffect(() => {
-    if (clientId && (startDate || endDate || !startDate && !endDate)) {
-      console.log('useClientSales: Dependencies changed, loading sales');
+    if (user?.id && clientTaxBlock) {
       loadSales(1);
     }
-  }, [clientId, startDate, endDate, loadSales]);
+  }, [user?.id, clientTaxBlock, startDate, endDate, loadSales]);
 
   return {
-    // Data
     sales,
     stats,
     totalCount,
     totalPages,
     currentPage,
-    dateRange,
-    availableDates,
     isLoading,
     error,
-
-    // Actions
     changePage,
-    refetch
+    clientTaxBlock
   };
 };

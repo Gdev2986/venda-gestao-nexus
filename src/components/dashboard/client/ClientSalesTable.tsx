@@ -19,6 +19,12 @@ interface ClientSalesTableProps {
   onPageChange: (page: number) => void;
 }
 
+interface ExtendedSale extends NormalizedSale {
+  net_amount: number;
+  tax_amount?: number;
+  tax_rate?: number;
+}
+
 export const ClientSalesTable = ({ 
   sales, 
   totalCount,
@@ -29,7 +35,7 @@ export const ClientSalesTable = ({
 }: ClientSalesTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Payment method badge function identical to admin side
+  // Payment method badge function
   const getPaymentMethodBadge = (method: string, installments?: number) => {
     switch (method) {
       case 'CREDIT':
@@ -84,8 +90,8 @@ export const ClientSalesTable = ({
     return String(dateValue);
   };
 
-  // Table columns identical to admin side
-  const columns: ColumnDef<NormalizedSale>[] = [
+  // Table columns with net amount and tax
+  const columns: ColumnDef<ExtendedSale>[] = [
     {
       id: "transaction_date",
       header: "Data/Hora",
@@ -121,7 +127,34 @@ export const ClientSalesTable = ({
       header: "Valor Bruto",
       cell: ({ row }) => (
         <span className="font-medium text-right">
-          {row.original.formatted_amount}
+          {formatCurrency(row.original.gross_amount)}
+        </span>
+      )
+    },
+    {
+      id: "tax_info",
+      header: "Taxa",
+      cell: ({ row }) => {
+        const taxRate = (row.original as ExtendedSale).tax_rate || 0;
+        const taxAmount = (row.original as ExtendedSale).tax_amount || 0;
+        return (
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">
+              {taxRate.toFixed(2)}%
+            </div>
+            <div className="text-xs font-medium text-red-600">
+              -{formatCurrency(taxAmount)}
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      id: "net_amount",
+      header: "Valor Líquido",
+      cell: ({ row }) => (
+        <span className="font-medium text-right text-green-600">
+          {formatCurrency((row.original as ExtendedSale).net_amount)}
         </span>
       )
     },
@@ -141,6 +174,11 @@ export const ClientSalesTable = ({
     sale.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.terminal?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Calculate totals for current page
+  const currentPageGrossTotal = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  const currentPageNetTotal = filteredSales.reduce((sum, sale) => sum + ((sale as ExtendedSale).net_amount || 0), 0);
+  const currentPageTaxTotal = filteredSales.reduce((sum, sale) => sum + ((sale as ExtendedSale).tax_amount || 0), 0);
 
   return (
     <Card className="border-l-4 border-l-emerald-500">
@@ -171,12 +209,28 @@ export const ClientSalesTable = ({
             </Button>
           </div>
         </div>
+
+        {/* Totals summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground">Total Bruto</div>
+            <div className="text-lg font-bold">{formatCurrency(currentPageGrossTotal)}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground">Total Taxas</div>
+            <div className="text-lg font-bold text-red-600">-{formatCurrency(currentPageTaxTotal)}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground">Total Líquido</div>
+            <div className="text-lg font-bold text-green-600">{formatCurrency(currentPageNetTotal)}</div>
+          </div>
+        </div>
       </CardHeader>
       
       <CardContent className="p-0">
         <DataTable
           columns={columns}
-          data={filteredSales}
+          data={filteredSales as ExtendedSale[]}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}

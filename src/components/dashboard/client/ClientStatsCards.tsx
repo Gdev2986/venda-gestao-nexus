@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, TrendingDown, CreditCard } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, CreditCard, Percent } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface ClientStatsCardsProps {
@@ -8,6 +8,7 @@ interface ClientStatsCardsProps {
   periodGross: number;
   periodNet: number;
   totalTransactions: number;
+  totalTaxes?: number;
   isLoading?: boolean;
 }
 
@@ -16,10 +17,15 @@ export const ClientStatsCards = ({
   periodGross,
   periodNet,
   totalTransactions,
+  totalTaxes = 0,
   isLoading = false
 }: ClientStatsCardsProps) => {
   const profitMargin = periodGross > 0 
     ? ((periodNet / periodGross) * 100).toFixed(1)
+    : "0.0";
+
+  const taxPercentage = periodGross > 0
+    ? ((totalTaxes / periodGross) * 100).toFixed(1)
     : "0.0";
 
   const cards = [
@@ -35,7 +41,7 @@ export const ClientStatsCards = ({
     {
       title: "Faturamento Bruto",
       value: formatCurrency(periodGross),
-      subtitle: "No período selecionado",
+      subtitle: "Valor total das vendas",
       icon: TrendingUp,
       borderColor: "border-l-green-500",
       bgColor: "bg-green-50",
@@ -44,25 +50,34 @@ export const ClientStatsCards = ({
     {
       title: "Faturamento Líquido",
       value: formatCurrency(periodNet),
-      subtitle: `Margem de ${profitMargin}%`,
+      subtitle: `Margem líquida de ${profitMargin}%`,
       icon: TrendingDown,
       borderColor: "border-l-purple-500",
       bgColor: "bg-purple-50",
       iconColor: "text-purple-600"
     },
     {
+      title: "Taxas Cobradas",
+      value: formatCurrency(totalTaxes),
+      subtitle: `${taxPercentage}% do faturamento`,
+      icon: Percent,
+      borderColor: "border-l-orange-500",
+      bgColor: "bg-orange-50",
+      iconColor: "text-orange-600"
+    },
+    {
       title: "Transações",
       value: totalTransactions.toString(),
       subtitle: "Total no período",
       icon: CreditCard,
-      borderColor: "border-l-orange-500",
-      bgColor: "bg-orange-50",
-      iconColor: "text-orange-600"
+      borderColor: "border-l-indigo-500",
+      bgColor: "bg-indigo-50",
+      iconColor: "text-indigo-600"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
       {cards.map((card, index) => (
         <Card key={index} className={`${card.borderColor} border-l-4 hover:shadow-md transition-shadow`}>
           <CardHeader className="pb-2">
