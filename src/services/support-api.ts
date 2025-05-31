@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams, TicketType, TicketPriority, TicketStatus } from "@/types/support.types";
 
@@ -80,7 +79,6 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
-      title: ticketData.title,
       description: ticketData.description,
       client_id: ticketData.client_id,
       type: ticketData.type as string, // Convert enum to string
@@ -104,7 +102,7 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
     id: data.id,
     client_id: data.client_id,
     assigned_to: data.technician_id, // Map technician_id to assigned_to
-    title: data.title || data.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
+    title: ticketData.title || data.description?.substring(0, 50) + '...' || 'Untitled', // Use description as title fallback
     description: data.description,
     type: data.type as TicketType,
     priority: data.priority as TicketPriority,
