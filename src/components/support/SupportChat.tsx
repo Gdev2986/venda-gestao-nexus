@@ -6,9 +6,11 @@ import { ChatHeader } from "./chat/ChatHeader";
 import { MessagesList } from "./chat/MessagesList";
 import { ChatInput } from "./chat/ChatInput";
 import { useAuth } from "@/hooks/use-auth";
+import { SupportTicket } from "@/types/support.types";
 
 interface SupportChatProps {
   ticketId: string;
+  ticket?: SupportTicket; // Pass the ticket object for better context
   messages?: any[]; // Legacy prop - now managed internally
   onSendMessage?: (message: string, attachments?: any) => Promise<void>; // Legacy prop
   isLoading?: boolean;
@@ -17,6 +19,7 @@ interface SupportChatProps {
 
 export const SupportChat = ({ 
   ticketId, 
+  ticket,
   isLoading: legacyLoading = false
 }: SupportChatProps) => {
   const { user } = useAuth();
@@ -44,6 +47,7 @@ export const SupportChat = ({
             isSubscribed={false} 
             onRefresh={refreshMessages}
             isLoading={true}
+            ticket={ticket}
           />
           <CardContent className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -61,18 +65,19 @@ export const SupportChat = ({
           isSubscribed={isSubscribed}
           onRefresh={refreshMessages}
           isLoading={isLoading}
+          ticket={ticket}
         />
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
           <MessagesList 
             messages={messages} 
-            currentUserId={user?.id} 
+            currentUserId={user?.id}
+            clientName={ticket?.client?.business_name}
           />
           <ChatInput 
             onSendMessage={sendMessage} 
             isLoading={isSending}
             disabled={!isSubscribed}
-            onMessageSent={refreshMessages} // Auto-refresh after sending
           />
         </CardContent>
       </Card>

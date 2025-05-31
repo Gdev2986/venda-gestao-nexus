@@ -4,15 +4,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate } from "@/utils/format";
 import { SupportMessage } from "@/types/support.types";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MessagesListProps {
   messages: SupportMessage[];
   currentUserId?: string;
+  clientName?: string;
 }
 
-export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => {
+export const MessagesList = ({ messages, currentUserId, clientName }: MessagesListProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { userRole } = useAuth();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -20,6 +23,39 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const getDisplayName = (message: SupportMessage, isOwnMessage: boolean) => {
+    if (isOwnMessage) {
+      return 'Você';
+    }
+
+    if (userRole === 'CLIENT') {
+      // Cliente sempre vê "Suporte" para mensagens de admin/logistics
+      return 'Suporte';
+    } else {
+      // Admin/Logistics vê o nome do cliente ou o nome real do usuário
+      if (message.user?.name) {
+        return message.user.name;
+      }
+      return clientName || 'Cliente';
+    }
+  };
+
+  const getAvatarInitials = (message: SupportMessage, isOwnMessage: boolean) => {
+    if (isOwnMessage) {
+      return 'EU';
+    }
+
+    if (userRole === 'CLIENT') {
+      return 'SUP'; // Suporte
+    } else {
+      // Admin/Logistics
+      if (message.user?.name) {
+        return message.user.name.charAt(0).toUpperCase();
+      }
+      return clientName ? clientName.charAt(0).toUpperCase() : 'C';
+    }
+  };
 
   if (messages.length === 0) {
     return (
@@ -45,14 +81,14 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
             >
               <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
                 <AvatarFallback className="text-xs">
-                  {isOwnMessage ? 'EU' : (message.user?.name?.charAt(0) || 'U')}
+                  {getAvatarInitials(message, isOwnMessage)}
                 </AvatarFallback>
               </Avatar>
               
               <div className={`flex flex-col gap-1 max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium">
-                    {isOwnMessage ? 'Você' : (message.user?.name || 'Usuário')}
+                    {getDisplayName(message, isOwnMessage)}
                   </span>
                   <span>{formatDate(message.created_at)}</span>
                 </div>

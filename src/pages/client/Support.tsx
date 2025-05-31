@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +26,8 @@ const ClientSupport = () => {
     createTicket,
     sendMessage,
     updateTicketStatus,
-    assignTicket
+    assignTicket,
+    refreshTickets
   } = useSupportSystem();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -79,7 +79,7 @@ const ClientSupport = () => {
   const handleTicketClick = async (ticket: any) => {
     console.log('🎫 Opening ticket:', ticket.id);
     setSelectedTicket(ticket);
-    await loadMessages(ticket.id, true); // Force reload when opening ticket
+    await loadMessages(ticket.id, true);
     setShowChatDialog(true);
   };
 
@@ -89,13 +89,10 @@ const ClientSupport = () => {
     setSelectedTicket(null);
   };
 
-  // Wrapper functions to handle the void return type requirement
-  const handleUpdateTicketStatus = async (ticketId: string, status: string): Promise<void> => {
-    await updateTicketStatus(ticketId, status);
-  };
-
-  const handleAssignTicket = async (ticketId: string, technicianId: string): Promise<void> => {
-    await assignTicket(ticketId, technicianId);
+  // Handle ticket updates and refresh
+  const handleTicketUpdate = async () => {
+    await refreshTickets(); // Refresh the tickets list
+    // Optionally refresh selected ticket data here
   };
 
   // Statistics
@@ -307,9 +304,7 @@ const ClientSupport = () => {
                 <div className="flex-1 min-h-0 w-full">
                   <SupportChat
                     ticketId={selectedTicket.id}
-                    messages={messages}
-                    onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
-                    isSubscribed={isSubscribed}
+                    ticket={selectedTicket}
                   />
                 </div>
               </div>
@@ -342,9 +337,7 @@ const ClientSupport = () => {
                     <div className="flex-1 min-h-0">
                       <SupportChat
                         ticketId={selectedTicket.id}
-                        messages={messages}
-                        onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
-                        isSubscribed={isSubscribed}
+                        ticket={selectedTicket}
                       />
                     </div>
                   </div>
@@ -353,8 +346,7 @@ const ClientSupport = () => {
                   <div className="space-y-4 overflow-y-auto">
                     <TicketStatusManager
                       ticket={selectedTicket}
-                      onStatusChange={handleUpdateTicketStatus}
-                      onAssignTicket={handleAssignTicket}
+                      onTicketUpdate={handleTicketUpdate}
                     />
                   </div>
                 </div>

@@ -4,24 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Clock, CheckCircle, XCircle } from "lucide-react";
+import { User, Clock, CheckCircle, XCircle, UserCheck } from "lucide-react";
 import { SupportTicket, TicketStatus } from "@/types/support.types";
 import { useAuth } from "@/hooks/use-auth";
+import { useTicketManagement } from "@/hooks/use-ticket-management";
 
 interface TicketStatusManagerProps {
   ticket: SupportTicket;
-  onStatusChange: (ticketId: string, status: string) => Promise<void>;
-  onAssignTicket?: (ticketId: string, technicianId: string) => Promise<void>;
-  isLoading?: boolean;
+  onTicketUpdate?: () => void; // Callback when ticket is updated
 }
 
 export const TicketStatusManager = ({ 
   ticket, 
-  onStatusChange, 
-  onAssignTicket,
-  isLoading = false 
+  onTicketUpdate
 }: TicketStatusManagerProps) => {
   const { user, userRole } = useAuth();
+  const { isUpdating, updateTicketStatus, assignTicketToMe } = useTicketManagement();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -53,19 +51,23 @@ export const TicketStatusManager = ({
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await onStatusChange(ticket.id, newStatus);
+      await updateTicketStatus(ticket.id, newStatus as TicketStatus);
+      if (onTicketUpdate) {
+        onTicketUpdate();
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }
   };
 
   const handleAssignToMe = async () => {
-    if (onAssignTicket && user?.id) {
-      try {
-        await onAssignTicket(ticket.id, user.id);
-      } catch (error) {
-        console.error("Error assigning ticket:", error);
+    try {
+      await assignTicketToMe(ticket.id);
+      if (onTicketUpdate) {
+        onTicketUpdate();
       }
+    } catch (error) {
+      console.error("Error assigning ticket:", error);
     }
   };
 
@@ -85,6 +87,12 @@ export const TicketStatusManager = ({
             <span className="text-sm font-medium">Prioridade:</span>
             {getPriorityBadge(ticket.priority)}
           </div>
+          {ticket.assigned_to && (
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-green-600">Em atendimento</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -111,7 +119,7 @@ export const TicketStatusManager = ({
           <Select
             value={ticket.status}
             onValueChange={handleStatusChange}
-            disabled={isLoading}
+            disabled={isUpdating}
           >
             <SelectTrigger>
               <SelectValue />
@@ -125,21 +133,28 @@ export const TicketStatusManager = ({
           </Select>
         </div>
 
-        {ticket.status === "PENDING" && (
+        {/* Assumir Atendimento button */}
+        {ticket.status === "PENDING" && !ticket.assigned_to && (
           <Button 
             onClick={handleAssignToMe}
-            disabled={isLoading}
+            disabled={isUpdating}
             className="w-full"
             size="sm"
           >
-            <User className="h-4 w-4 mr-2" />
-            Atender Chamado
+            <UserCheck className="h-4 w-4 mr-2" />
+            Assumir Atendimento
           </Button>
         )}
 
+        {/* Show current attendant */}
         {ticket.assigned_to && (
-          <div className="text-xs text-muted-foreground">
-            Técnico: {ticket.assigned_to === user?.id ? "Você" : ticket.assigned_to}
+          <div className="text-xs text-muted-foreground bg-green-50 p-2 rounded">
+            <div className="flex items-center gap-1">
+              <UserCheck className="h-3 w-3 text-green-600" />
+              <span className="text-green-700">
+                Atendimento assumido por: {ticket.assigned_to === user?.id ? "Você" : "Outro técnico"}
+              </span>
+            </div>
           </div>
         )}
       </CardContent>

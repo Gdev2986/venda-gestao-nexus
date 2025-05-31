@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { SupportMessage } from "@/types/support.types"; // Use consistent types
+import { SupportMessage } from "@/types/support.types";
 import { getMessages, sendMessage, markMessagesAsRead } from "@/services/support/message-api";
 
 interface UseSupportChatRealtimeProps {
@@ -21,18 +21,20 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
   const { toast } = useToast();
   const channelRef = useRef<any>(null);
 
-  // Load initial messages
+  // Load initial messages with force reload option
   const loadMessages = useCallback(async (forceReload = false) => {
-    if (!ticketId || (!forceReload && messages.length > 0)) return;
+    if (!ticketId) return;
+    
+    // Always reload if forced, or if no messages exist
+    if (!forceReload && messages.length > 0) return;
     
     setIsLoading(true);
     try {
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
       
-      // Ensure all messages have is_read property and compatible user data
+      // Transform messages with proper user data
       const messagesWithReadStatus = (data || []).map(msg => {
-        // Handle user data more safely
         const userData = msg.user && typeof msg.user === 'object' ? msg.user as any : null;
         
         return {
@@ -40,11 +42,12 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
           is_read: msg.is_read ?? false,
           user: userData ? {
             name: userData.name || 'Usuário',
-            email: userData.email // This might be undefined, which is fine
+            email: userData.email
           } : undefined
         };
       });
       
+      console.log('📥 Loaded messages:', messagesWithReadStatus.length);
       setMessages(messagesWithReadStatus);
       
       // Mark messages as read if user is viewing the chat
@@ -63,19 +66,19 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     }
   }, [ticketId, user?.id, isOpen, toast]);
 
-  // Auto-refresh messages after sending
+  // Force refresh messages function
   const refreshMessages = useCallback(async () => {
-    console.log('🔄 Refreshing messages for ticket:', ticketId);
+    console.log('🔄 Force refreshing messages for ticket:', ticketId);
     await loadMessages(true);
   }, [loadMessages, ticketId]);
 
-  // Setup realtime subscription
+  // Setup realtime subscription with improved handling
   useEffect(() => {
     if (!ticketId || !isOpen) return;
 
     console.log('🔔 Setting up realtime subscription for ticket:', ticketId);
 
-    // Create channel for this specific ticket
+    // Create channel for this specific ticket's conversation
     const channel = supabase
       .channel(`support-chat-${ticketId}`)
       .on(
@@ -86,46 +89,19 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
           table: 'support_messages',
           filter: `conversation_id=eq.${ticketId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('📩 New message received via realtime:', payload.new);
           
-          const newMessage = payload.new as any;
-          
-          // Add the new message to the state with proper type conversion
-          setMessages(prev => {
-            // Check if message already exists to avoid duplicates
-            const exists = prev.some(msg => msg.id === newMessage.id);
-            if (exists) return prev;
-            
-            // Handle user data more safely
-            const userData = newMessage.user && typeof newMessage.user === 'object' ? newMessage.user as any : null;
-            
-            const messageWithReadStatus: SupportMessage = {
-              ...newMessage,
-              is_read: newMessage.is_read ?? false,
-              user: userData ? {
-                name: userData.name || 'Usuário',
-                email: userData.email // This might be undefined, which is fine
-              } : undefined
-            };
-            
-            return [...prev, messageWithReadStatus];
-          });
+          // Force refresh messages to get complete data including user info
+          await refreshMessages();
 
           // Show notification if message is from someone else
+          const newMessage = payload.new as any;
           if (newMessage.user_id !== user?.id) {
             toast({
               title: "Nova mensagem",
               description: "Você recebeu uma nova mensagem no chat",
             });
-          }
-
-          // Mark as read if chat is open and auto-refresh
-          if (user?.id && isOpen) {
-            setTimeout(() => {
-              markMessagesAsRead(ticketId, user.id);
-              refreshMessages();
-            }, 500);
           }
         }
       )
@@ -149,7 +125,7 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     };
   }, [ticketId, isOpen, user?.id, loadMessages, toast, refreshMessages]);
 
-  // Send message function with auto-refresh
+  // Send message function with improved refresh
   const handleSendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim() || !user?.id || !ticketId || isSending) return;
 
@@ -161,10 +137,10 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
 
       console.log('✅ Message sent successfully:', data);
       
-      // Auto-refresh messages after sending
-      setTimeout(() => {
-        refreshMessages();
-      }, 300);
+      // Force refresh messages immediately after sending
+      setTimeout(async () => {
+        await refreshMessages();
+      }, 200);
       
     } catch (error) {
       console.error('❌ Error sending message:', error);
