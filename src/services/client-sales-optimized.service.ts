@@ -155,7 +155,7 @@ export const clientSalesOptimizedService = {
     return { netAmount, taxAmount, taxRate: defaultRate };
   },
 
-  // Buscar vendas do cliente usando a função existente do admin
+  // Buscar vendas do cliente usando get_sales_optimized
   async getClientSalesWithTaxes(
     clientId: string,
     startDate?: string,
@@ -182,7 +182,7 @@ export const clientSalesOptimizedService = {
       // 2. Buscar configuração de taxas
       const taxConfig = await this.getClientTaxConfig(clientId);
 
-      // 3. Usar a função existente get_sales_optimized filtrada por terminais
+      // 3. Usar get_sales_optimized filtrada por terminais
       const { data, error } = await supabase.rpc('get_sales_optimized', {
         page_number: page,
         page_size: pageSize,
@@ -222,7 +222,7 @@ export const clientSalesOptimizedService = {
         );
 
         return {
-          id: sale.id,
+          sale_id: sale.id,
           code: sale.code,
           terminal: sale.terminal,
           transaction_date: sale.date,
@@ -231,7 +231,8 @@ export const clientSalesOptimizedService = {
           tax_amount: taxAmount,
           tax_rate: taxRate,
           payment_type: sale.payment_method,
-          installments: sale.installments || 1
+          installments: sale.installments || 1,
+          total_count: totalCount
         };
       });
 
@@ -279,8 +280,8 @@ export const clientSalesOptimizedService = {
       // Buscar configuração de taxas
       const taxConfig = await this.getClientTaxConfig(clientId);
 
-      // Usar função de estatísticas agregadas existente
-      const { data, error } = await supabase.rpc('get_sales_aggregated_stats', {
+      // Usar get_sales_aggregated_stats para totais básicos
+      const { data: statsData, error: statsError } = await supabase.rpc('get_sales_aggregated_stats', {
         filter_date_start: startDate || null,
         filter_date_end: endDate || null,
         filter_hour_start: null,
@@ -290,8 +291,8 @@ export const clientSalesOptimizedService = {
         filter_source: null
       });
 
-      if (error) {
-        console.error('Error fetching client stats:', error);
+      if (statsError) {
+        console.error('Error fetching client stats:', statsError);
         return {
           total_transactions: 0,
           total_gross: 0,
@@ -301,14 +302,14 @@ export const clientSalesOptimizedService = {
         };
       }
 
-      const stats = data?.[0] || {
+      const stats = statsData?.[0] || {
         total_sales: 0,
         total_gross_amount: 0,
         total_net_amount: 0,
         office_commission: 0
       };
 
-      // Buscar breakdown por método de pagamento
+      // Buscar vendas para breakdown por método de pagamento
       const { data: salesData, error: salesError } = await supabase.rpc('get_sales_optimized', {
         page_number: 1,
         page_size: 10000, // Pegar todas para calcular stats
@@ -321,7 +322,7 @@ export const clientSalesOptimizedService = {
         filter_source: null
       });
 
-      let paymentMethodStats: any = {};
+      let paymentMethodStats: { [key: string]: { gross: number; net: number; taxes: number; count: number } } = {};
 
       if (!salesError && salesData) {
         // Calcular stats por método de pagamento
@@ -350,22 +351,19 @@ export const clientSalesOptimizedService = {
         });
       }
 
-      const result = {
-        total_transactions: Number(stats.total_sales || 0),
-        total_gross: Number(stats.total_gross_amount || 0),
-        total_net: Number(stats.total_net_amount || 0), // Será recalculado com taxas corretas
-        total_taxes: Number(stats.office_commission || 0), // Será recalculado
-        payment_method_stats: paymentMethodStats
-      };
-
       // Recalcular totais baseado nas taxas corretas
-      const totals = Object.values(paymentMethodStats).reduce((acc: any, method: any) => ({
+      const totals = Object.values(paymentMethodStats).reduce((acc, method) => ({
         net: acc.net + method.net,
         taxes: acc.taxes + method.taxes
       }), { net: 0, taxes: 0 });
 
-      result.total_net = totals.net;
-      result.total_taxes = totals.taxes;
+      const result = {
+        total_transactions: Number(stats.total_sales || 0),
+        total_gross: Number(stats.total_gross_amount || 0),
+        total_net: totals.net,
+        total_taxes: totals.taxes,
+        payment_method_stats: paymentMethodStats
+      };
 
       console.log('clientSalesOptimizedService: Got stats:', result);
 
