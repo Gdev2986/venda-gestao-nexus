@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import TerminalFilter from "./TerminalFilter";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { optimizedSalesService } from "@/services/optimized-sales.service";
 
 interface OptimizedSalesDateFilterProps {
   filters: SalesFilters;
@@ -26,11 +28,15 @@ const OptimizedSalesDateFilter = ({
   totalRecords,
   isLoading
 }: OptimizedSalesDateFilterProps) => {
+  // Inicializar com a data de ontem por padrão
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  
   const [localStartDate, setLocalStartDate] = useState<Date | undefined>(
-    filters.dateStart ? new Date(filters.dateStart) : undefined
+    filters.dateStart ? new Date(filters.dateStart) : yesterdayDate
   );
   const [localEndDate, setLocalEndDate] = useState<Date | undefined>(
-    filters.dateEnd ? new Date(filters.dateEnd) : undefined
+    filters.dateEnd ? new Date(filters.dateEnd) : yesterdayDate
   );
   const [localHourStart, setLocalHourStart] = useState(filters.hourStart || '');
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
@@ -40,6 +46,16 @@ const OptimizedSalesDateFilter = ({
   const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
   const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
   const [showAdditionalFilters, setShowAdditionalFilters] = useState(false);
+
+  // Sincronizar as datas locais quando os filtros mudarem de fora
+  useEffect(() => {
+    if (filters.dateStart) {
+      setLocalStartDate(new Date(filters.dateStart));
+    }
+    if (filters.dateEnd) {
+      setLocalEndDate(new Date(filters.dateEnd));
+    }
+  }, [filters.dateStart, filters.dateEnd]);
 
   const handleApplyDateFilter = () => {
     onFiltersChange({

@@ -2,6 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
@@ -14,15 +16,17 @@ import {
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
 import { PaymentTypeBadge } from "@/components/sales/PaymentTypeBadge";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 interface OptimizedSalesTableProps {
   sales: NormalizedSale[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
+  pageSize: number;
   isLoading: boolean;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 const OptimizedSalesTable = memo(({ 
@@ -30,12 +34,25 @@ const OptimizedSalesTable = memo(({
   totalCount, 
   totalPages, 
   currentPage, 
+  pageSize,
   isLoading,
-  onPageChange 
+  onPageChange,
+  onPageSizeChange
 }: OptimizedSalesTableProps) => {
+  
+  const [pageInput, setPageInput] = useState<string>('');
   
   // Calcular totais da página atual
   const currentPageTotal = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+
+  // Handler para ir para uma página específica
+  const handleGoToPage = () => {
+    const page = parseInt(pageInput);
+    if (page >= 1 && page <= totalPages) {
+      onPageChange(page);
+      setPageInput('');
+    }
+  };
 
   // Render status badge with dark theme support
   const renderStatusBadge = (status: string) => {
@@ -103,9 +120,16 @@ const OptimizedSalesTable = memo(({
             
             <div className="flex flex-col sm:items-center">
               <span className="font-medium">Registros por página:</span>
-              <span className="text-foreground font-bold">
-                {sales.length}
-              </span>
+              <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value))}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -180,78 +204,105 @@ const OptimizedSalesTable = memo(({
               </Table>
             </div>
             
-            {/* Paginação Otimizada */}
+            {/* Paginação Otimizada com Input para Página */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t">
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-4">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * 10) + 1} a {Math.min(currentPage * 10, totalCount)} de {totalCount.toLocaleString('pt-BR')} registros
+                  Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, totalCount)} de {totalCount.toLocaleString('pt-BR')} registros
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1 || isLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Anterior
-                  </Button>
-                  
-                  <div className="flex items-center space-x-1">
-                    {currentPage > 3 && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(1)}
-                          className="w-9 h-9"
-                          disabled={isLoading}
-                        >
-                          1
-                        </Button>
-                        {currentPage > 4 && <span className="text-muted-foreground">...</span>}
-                      </>
-                    )}
-                    
-                    {getPageNumbers().map((pageNumber) => (
-                      <Button
-                        key={pageNumber}
-                        variant={pageNumber === currentPage ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNumber)}
-                        className="w-9 h-9"
-                        disabled={isLoading}
-                      >
-                        {pageNumber}
-                      </Button>
-                    ))}
-                    
-                    {currentPage < totalPages - 2 && (
-                      <>
-                        {currentPage < totalPages - 3 && <span className="text-muted-foreground">...</span>}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(totalPages)}
-                          className="w-9 h-9"
-                          disabled={isLoading}
-                        >
-                          {totalPages}
-                        </Button>
-                      </>
-                    )}
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Input para ir para página específica */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Ir para página:</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={pageInput}
+                      onChange={(e) => setPageInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleGoToPage()}
+                      className="w-16 h-8 text-center"
+                      placeholder={currentPage.toString()}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGoToPage}
+                      disabled={!pageInput || isLoading}
+                      className="h-8"
+                    >
+                      Ir
+                    </Button>
                   </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= totalPages || isLoading}
-                  >
-                    Próxima
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+
+                  {/* Controles de paginação tradicionais */}
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage <= 1 || isLoading}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {currentPage > 3 && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(1)}
+                            className="w-9 h-9"
+                            disabled={isLoading}
+                          >
+                            1
+                          </Button>
+                          {currentPage > 4 && <span className="text-muted-foreground">...</span>}
+                        </>
+                      )}
+                      
+                      {getPageNumbers().map((pageNumber) => (
+                        <Button
+                          key={pageNumber}
+                          variant={pageNumber === currentPage ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNumber)}
+                          className="w-9 h-9"
+                          disabled={isLoading}
+                        >
+                          {pageNumber}
+                        </Button>
+                      ))}
+                      
+                      {currentPage < totalPages - 2 && (
+                        <>
+                          {currentPage < totalPages - 3 && <span className="text-muted-foreground">...</span>}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(totalPages)}
+                            className="w-9 h-9"
+                            disabled={isLoading}
+                          >
+                            {totalPages}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages || isLoading}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

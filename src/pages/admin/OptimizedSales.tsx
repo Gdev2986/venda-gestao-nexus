@@ -20,12 +20,14 @@ const OptimizedSalesPage = () => {
     totalCount,
     totalPages,
     currentPage,
+    pageSize,
     dateRange,
     availableDates,
     filters,
     isLoading,
     updateFilters,
     changePage,
+    changePageSize,
     resetFilters,
     refreshSales,
     periodStats
@@ -88,8 +90,10 @@ const OptimizedSalesPage = () => {
           totalCount={totalCount}
           totalPages={totalPages}
           currentPage={currentPage}
+          pageSize={pageSize}
           isLoading={isLoading}
           onPageChange={changePage}
+          onPageSizeChange={changePageSize}
         />
       </div>
 

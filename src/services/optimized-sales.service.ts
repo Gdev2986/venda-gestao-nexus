@@ -71,6 +71,20 @@ class OptimizedSalesService {
     return Date.now() - entry.timestamp < this.cacheTimeout;
   }
 
+  // Função para adicionar 3 horas (UTC-3 para horário brasileiro)
+  private addBrazilianTimezone(dateString: string): string {
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 3);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
   async getDateRange(): Promise<SalesDateRange | null> {
     try {
       const { data, error } = await supabase.rpc('get_sales_date_range');
@@ -263,16 +277,8 @@ class OptimizedSalesService {
       const totalPages = Math.ceil(totalCount / pageSize);
 
       let sales: NormalizedSale[] = salesData.map((sale: any) => {
-        const saleDate = new Date(sale.date);
-        const formattedDate = saleDate.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }) + ' ' + saleDate.toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
+        // Usar a função para adicionar 3 horas ao horário brasileiro
+        const formattedDate = this.addBrazilianTimezone(sale.date);
 
         return {
           id: sale.id,

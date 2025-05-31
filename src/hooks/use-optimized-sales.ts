@@ -33,6 +33,7 @@ export const useOptimizedSales = () => {
     dateEnd: optimizedSalesService.getYesterday()
   });
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10); // Novo estado para o tamanho da página
   
   // Ref para controlar se os filtros mudaram
   const previousFiltersRef = useRef<string>('');
@@ -91,9 +92,10 @@ export const useOptimizedSales = () => {
     }
   }, []);
 
-  const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters, forceReload: boolean = false) => {
+  const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters, forceReload: boolean = false, newPageSize?: number) => {
     const activeFilters = newFilters || filters;
-    const currentFiltersString = JSON.stringify(activeFilters);
+    const activePageSize = newPageSize || pageSize;
+    const currentFiltersString = JSON.stringify({ ...activeFilters, pageSize: activePageSize });
     const filtersChanged = currentFiltersString !== previousFiltersRef.current;
     
     // Se os filtros mudaram, limpar cache e começar do zero
@@ -112,9 +114,9 @@ export const useOptimizedSales = () => {
     }
     
     try {
-      console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
+      console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page, 'pageSize:', activePageSize);
       
-      const result = await optimizedSalesService.getSalesPaginated(page, 10, activeFilters);
+      const result = await optimizedSalesService.getSalesPaginated(page, activePageSize, activeFilters);
       
       setSalesData(result);
       setCurrentPage(page);
@@ -159,7 +161,7 @@ export const useOptimizedSales = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, toast, loadPeriodStats]);
+  }, [filters, pageSize, toast, loadPeriodStats]);
 
   // Efeito inicial para carregar metadados
   useEffect(() => {
@@ -194,6 +196,13 @@ export const useOptimizedSales = () => {
     }
   }, [loadSales, salesData.totalPages, currentPage, filters]);
 
+  const changePageSize = useCallback((newPageSize: number) => {
+    console.log('Changing page size to:', newPageSize);
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    loadSales(1, filters, true, newPageSize);
+  }, [filters, loadSales]);
+
   const resetFilters = useCallback(() => {
     console.log('Resetting filters to load all data');
     const emptyFilters = {};
@@ -214,6 +223,7 @@ export const useOptimizedSales = () => {
     totalCount: salesData.totalCount,
     totalPages: salesData.totalPages,
     currentPage,
+    pageSize,
     dateRange,
     availableDates,
     filters,
@@ -224,6 +234,7 @@ export const useOptimizedSales = () => {
     // Actions
     updateFilters,
     changePage,
+    changePageSize,
     resetFilters,
     refreshSales
   };
