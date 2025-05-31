@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   getTickets, 
   getClientTickets, 
-  createTicket, 
+  createTicket as createTicketAPI, 
   updateTicket 
 } from "@/services/support/ticket-api";
 import { getMessages } from "@/services/support/message-api";
@@ -85,7 +85,7 @@ export const useSupportSystem = () => {
           is_read: msg.is_read ?? false,
           user: userData ? {
             name: userData.name || 'Usuário',
-            email: userData.email // This might be undefined, which is fine
+            email: userData.email || ''
           } : undefined
         };
       });
@@ -105,9 +105,7 @@ export const useSupportSystem = () => {
   const createTicket = useCallback(async (ticketData: CreateTicketParams): Promise<void> => {
     setIsCreating(true);
     try {
-      const { data, error } = await createTicket(ticketData);
-      if (error) throw error;
-      
+      await createTicketAPI(ticketData);
       await loadTickets(); // Refresh tickets list
       
       toast({

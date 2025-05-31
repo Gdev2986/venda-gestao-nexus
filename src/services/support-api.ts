@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams, TicketType, TicketPriority, TicketStatus } from "@/types/support.types";
 
@@ -22,7 +21,7 @@ export const getSupportTickets = async () => {
   const transformedData: SupportTicket[] = (data || []).map(item => ({
     id: item.id,
     client_id: item.client_id,
-    technician_id: item.technician_id,
+    assigned_to: item.technician_id, // Map technician_id to assigned_to
     title: item.title,
     description: item.description,
     type: item.type as TicketType,
@@ -59,7 +58,7 @@ export const getTicketById = async (ticketId: string) => {
   const transformedData: SupportTicket = {
     id: data.id,
     client_id: data.client_id,
-    technician_id: data.technician_id,
+    assigned_to: data.technician_id, // Map technician_id to assigned_to
     title: data.title,
     description: data.description,
     type: data.type as TicketType,
@@ -80,11 +79,11 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
-      title: ticketData.description,
+      title: ticketData.title,
       description: ticketData.description,
       client_id: ticketData.client_id,
-      type: ticketData.type,
-      priority: ticketData.priority,
+      type: ticketData.type as string, // Convert enum to string
+      priority: ticketData.priority as string, // Convert enum to string
       status: 'PENDING'
     })
     .select(`
@@ -103,7 +102,7 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const transformedData: SupportTicket = {
     id: data.id,
     client_id: data.client_id,
-    technician_id: data.technician_id,
+    assigned_to: data.technician_id, // Map technician_id to assigned_to
     title: data.title,
     description: data.description,
     type: data.type as TicketType,
@@ -121,9 +120,20 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
 
 // Update support ticket
 export const updateSupportTicket = async (ticketId: string, updates: Partial<SupportTicket>) => {
+  // Convert our interface fields to database fields
+  const dbUpdates: any = {};
+  
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.status !== undefined) dbUpdates.status = updates.status as string;
+  if (updates.priority !== undefined) dbUpdates.priority = updates.priority as string;
+  if (updates.type !== undefined) dbUpdates.type = updates.type as string;
+  if (updates.assigned_to !== undefined) dbUpdates.technician_id = updates.assigned_to; // Map assigned_to to technician_id
+  if (updates.resolution !== undefined) dbUpdates.resolution = updates.resolution;
+  if (updates.scheduled_date !== undefined) dbUpdates.scheduled_date = updates.scheduled_date;
+
   const { data, error } = await supabase
     .from('support_requests')
-    .update(updates)
+    .update(dbUpdates)
     .eq('id', ticketId)
     .select(`
       *,
@@ -141,7 +151,7 @@ export const updateSupportTicket = async (ticketId: string, updates: Partial<Sup
   const transformedData: SupportTicket = {
     id: data.id,
     client_id: data.client_id,
-    technician_id: data.technician_id,
+    assigned_to: data.technician_id, // Map technician_id to assigned_to
     title: data.title,
     description: data.description,
     type: data.type as TicketType,
