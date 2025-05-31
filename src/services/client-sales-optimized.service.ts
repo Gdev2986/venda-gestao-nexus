@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientSalesResult {
@@ -30,46 +31,70 @@ export interface ClientSalesStats {
 }
 
 export const clientSalesOptimizedService = {
-  // Buscar terminais do cliente
+  // Buscar terminais do cliente com debug detalhado
   async getClientTerminals(clientId: string): Promise<string[]> {
     try {
-      console.log('Getting terminals for client:', clientId);
+      console.log('[DEBUG] getClientTerminals - Starting for client:', clientId);
+      console.log('[DEBUG] getClientTerminals - Supabase client status:', !!supabase);
       
       const { data: machines, error } = await supabase
         .from('machines')
         .select('id')
         .eq('client_id', clientId);
 
+      console.log('[DEBUG] getClientTerminals - Machines query result:', { 
+        machines, 
+        error,
+        machineCount: machines?.length || 0
+      });
+
       if (error) {
-        console.error('Error fetching machines:', error);
+        console.error('[DEBUG] getClientTerminals - Error fetching machines:', error);
         return [];
       }
 
       if (!machines || machines.length === 0) {
-        console.log('No machines found for client');
+        console.log('[DEBUG] getClientTerminals - No machines found for client, trying fallback approach');
+        
+        // Fallback: buscar diretamente por vendas do cliente usando user_client_access
+        const { data: userAccess } = await supabase
+          .from('user_client_access')
+          .select('user_id')
+          .eq('client_id', clientId);
+        
+        console.log('[DEBUG] getClientTerminals - User access found:', userAccess);
+        
+        // Se não conseguiu nem isso, retornar array vazio
         return [];
       }
 
       // Buscar terminais únicos das vendas dessas máquinas
       const machineIds = machines.map(m => m.id);
+      console.log('[DEBUG] getClientTerminals - Machine IDs:', machineIds);
       
       const { data: sales, error: salesError } = await supabase
         .from('sales')
         .select('terminal')
         .in('machine_id', machineIds);
 
+      console.log('[DEBUG] getClientTerminals - Sales query result:', { 
+        sales, 
+        salesError,
+        salesCount: sales?.length || 0
+      });
+
       if (salesError) {
-        console.error('Error fetching terminals from sales:', salesError);
+        console.error('[DEBUG] getClientTerminals - Error fetching terminals from sales:', salesError);
         return [];
       }
 
       // Retornar terminais únicos
       const uniqueTerminals = [...new Set(sales?.map(s => s.terminal) || [])];
-      console.log('Found terminals for client:', uniqueTerminals);
+      console.log('[DEBUG] getClientTerminals - Unique terminals found:', uniqueTerminals);
       
       return uniqueTerminals;
     } catch (error) {
-      console.error('Error in getClientTerminals:', error);
+      console.error('[DEBUG] getClientTerminals - Unexpected error:', error);
       return [];
     }
   },
@@ -154,7 +179,7 @@ export const clientSalesOptimizedService = {
     return { netAmount, taxAmount, taxRate: defaultRate };
   },
 
-  // Buscar vendas do cliente usando get_sales_optimized
+  // Buscar vendas do cliente usando get_sales_optimized com debug
   async getClientSalesWithTaxes(
     clientId: string,
     startDate?: string,
@@ -163,17 +188,82 @@ export const clientSalesOptimizedService = {
     pageSize: number = 1000
   ) {
     try {
-      console.log('clientSalesOptimizedService: Getting sales for client:', clientId);
+      console.log('[DEBUG] getClientSalesWithTaxes - Starting for client:', clientId);
       
       // 1. Buscar terminais do cliente
       const terminals = await this.getClientTerminals(clientId);
+      console.log('[DEBUG] getClientSalesWithTaxes - Terminals received:', terminals);
       
       if (terminals.length === 0) {
-        console.log('No terminals found for client, returning empty result');
+        console.log('[DEBUG] getClientSalesWithTaxes - No terminals found, implementing fallback strategy');
+        
+        // Estratégia de fallback: buscar vendas usando machine_id diretamente
+        const { data: machines } = await supabase
+          .from('machines')
+          .select('id')
+          .eq('client_id', clientId);
+        
+        console.log('[DEBUG] getClientSalesWithTaxes - Fallback machines found:', machines?.length || 0);
+        
+        if (!machines || machines.length === 0) {
+          console.log('[DEBUG] getClientSalesWithTaxes - No machines in fallback, returning empty result');
+          return {
+            sales: [],
+            totalCount: 0,
+            totalPages: 0,
+            currentPage: page
+          };
+        }
+        
+        // Usar machine_ids diretamente nas vendas se não conseguir terminais
+        const machineIds = machines.map(m => m.id);
+        const { data: salesData } = await supabase
+          .from('sales')
+          .select('*')
+          .in('machine_id', machineIds)
+          .range((page - 1) * pageSize, page * pageSize - 1)
+          .order('date', { ascending: false });
+        
+        console.log('[DEBUG] getClientSalesWithTaxes - Fallback sales found:', salesData?.length || 0);
+        
+        if (!salesData || salesData.length === 0) {
+          return {
+            sales: [],
+            totalCount: 0,
+            totalPages: 0,
+            currentPage: page
+          };
+        }
+        
+        // Processar vendas do fallback
+        const taxConfig = await this.getClientTaxConfig(clientId);
+        const sales = salesData.map((sale: any) => {
+          const { netAmount, taxAmount, taxRate } = this.calculateNetAmount(
+            Number(sale.gross_amount),
+            sale.payment_method,
+            sale.installments || 1,
+            taxConfig
+          );
+
+          return {
+            id: sale.id,
+            code: sale.code,
+            terminal: sale.terminal,
+            transaction_date: sale.date,
+            gross_amount: Number(sale.gross_amount),
+            net_amount: netAmount,
+            tax_amount: taxAmount,
+            tax_rate: taxRate,
+            payment_type: sale.payment_method,
+            installments: sale.installments || 1,
+            total_count: salesData.length
+          };
+        });
+        
         return {
-          sales: [],
-          totalCount: 0,
-          totalPages: 0,
+          sales,
+          totalCount: salesData.length,
+          totalPages: Math.ceil(salesData.length / pageSize),
           currentPage: page
         };
       }
@@ -192,6 +282,11 @@ export const clientSalesOptimizedService = {
         filter_terminals: terminals,
         filter_payment_type: null,
         filter_source: null
+      });
+
+      console.log('[DEBUG] getClientSalesWithTaxes - RPC result:', { 
+        data: data?.length || 0, 
+        error 
       });
 
       if (error) {
@@ -221,7 +316,7 @@ export const clientSalesOptimizedService = {
         );
 
         return {
-          id: sale.id,  // Changed from sale_id to id
+          id: sale.id,
           code: sale.code,
           terminal: sale.terminal,
           transaction_date: sale.date,
@@ -235,7 +330,7 @@ export const clientSalesOptimizedService = {
         };
       });
 
-      console.log('clientSalesOptimizedService: Got sales:', {
+      console.log('[DEBUG] getClientSalesWithTaxes - Final result:', {
         salesCount: sales.length,
         totalCount,
         totalPages
@@ -249,7 +344,7 @@ export const clientSalesOptimizedService = {
       };
 
     } catch (error) {
-      console.error('clientSalesOptimizedService: Error:', error);
+      console.error('[DEBUG] getClientSalesWithTaxes - Error:', error);
       throw error;
     }
   },
