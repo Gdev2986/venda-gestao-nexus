@@ -42,7 +42,8 @@ export const clientSalesOptimizedService = {
     try {
       console.log('clientSalesOptimizedService: Getting sales for client:', clientId);
       
-      const { data, error } = await supabase.rpc('get_client_sales_with_taxes', {
+      // Use explicit any type to bypass TypeScript type checking for new RPC function
+      const { data, error } = await (supabase as any).rpc('get_client_sales_with_taxes', {
         p_client_id: clientId,
         p_start_date: startDate || null,
         p_end_date: endDate || null,
@@ -55,7 +56,8 @@ export const clientSalesOptimizedService = {
         throw error;
       }
 
-      const sales = (data as ClientSalesResult[]) || [];
+      // Cast to unknown first, then to the expected type
+      const sales = (data as unknown as ClientSalesResult[]) || [];
       const totalCount = sales.length > 0 ? sales[0].total_count : 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -98,7 +100,8 @@ export const clientSalesOptimizedService = {
     try {
       console.log('clientSalesOptimizedService: Getting stats for client:', clientId);
       
-      const { data, error } = await supabase.rpc('get_client_sales_stats', {
+      // Use explicit any type to bypass TypeScript type checking for new RPC function
+      const { data, error } = await (supabase as any).rpc('get_client_sales_stats', {
         p_client_id: clientId,
         p_start_date: startDate || null,
         p_end_date: endDate || null
@@ -109,7 +112,8 @@ export const clientSalesOptimizedService = {
         throw error;
       }
 
-      const statsArray = data as Array<{
+      // Cast to unknown first, then to the expected type
+      const statsArray = data as unknown as Array<{
         total_transactions: number;
         total_gross: number;
         total_net: number;
