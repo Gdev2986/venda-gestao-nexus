@@ -1,38 +1,50 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { SupportMessage } from "@/types/support.types";
-import { useAuth } from "@/hooks/use-auth";
+import { useSupportChatRealtime } from "@/hooks/use-support-chat-realtime";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessagesList } from "./chat/MessagesList";
 import { ChatInput } from "./chat/ChatInput";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SupportChatProps {
   ticketId: string;
-  messages: SupportMessage[];
-  onSendMessage: (message: string, attachments?: any) => Promise<void>;
+  messages?: any[]; // Legacy prop - now managed internally
+  onSendMessage?: (message: string, attachments?: any) => Promise<void>; // Legacy prop
   isLoading?: boolean;
-  isSubscribed?: boolean;
+  isSubscribed?: boolean; // Legacy prop - now managed internally
 }
 
 export const SupportChat = ({ 
   ticketId, 
-  messages, 
-  onSendMessage, 
-  isLoading = false,
-  isSubscribed = false
+  isLoading: legacyLoading = false
 }: SupportChatProps) => {
   const { user } = useAuth();
+  
+  const {
+    messages,
+    isLoading,
+    isSubscribed,
+    isSending,
+    sendMessage,
+    refreshMessages
+  } = useSupportChatRealtime({
+    ticketId,
+    isOpen: true
+  });
 
-  const handleSendMessage = async (message: string) => {
-    await onSendMessage(message);
-  };
+  const actualLoading = legacyLoading || isLoading;
 
-  if (isLoading) {
+  if (actualLoading && messages.length === 0) {
     return (
       <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full">
         <Card className="flex-1 flex flex-col h-full">
-          <ChatHeader messageCount={0} isSubscribed={isSubscribed} />
+          <ChatHeader 
+            messageCount={0} 
+            isSubscribed={false} 
+            onRefresh={refreshMessages}
+            isLoading={true}
+          />
           <CardContent className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </CardContent>
@@ -44,15 +56,23 @@ export const SupportChat = ({
   return (
     <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full overflow-hidden">
       <Card className="flex-1 flex flex-col h-full overflow-hidden">
-        <ChatHeader messageCount={messages.length} isSubscribed={isSubscribed} />
+        <ChatHeader 
+          messageCount={messages.length} 
+          isSubscribed={isSubscribed}
+          onRefresh={refreshMessages}
+          isLoading={isLoading}
+        />
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
           <MessagesList 
-            key={`messages-${ticketId}-${messages.length}`} 
             messages={messages} 
             currentUserId={user?.id} 
           />
-          <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          <ChatInput 
+            onSendMessage={sendMessage} 
+            isLoading={isSending}
+            disabled={!isSubscribed}
+          />
         </CardContent>
       </Card>
     </div>

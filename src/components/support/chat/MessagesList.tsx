@@ -1,9 +1,9 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDate } from "@/utils/format";
 import { SupportMessage } from "@/types/support.types";
-import { MessageItem } from "./MessageItem";
 
 interface MessagesListProps {
   messages: SupportMessage[];
@@ -11,62 +11,67 @@ interface MessagesListProps {
 }
 
 export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: "smooth",
-          block: "end"
-        });
-      }
-    };
-
-    // Scroll immediately and also with a small delay for DOM updates
-    scrollToBottom();
-    const timeoutId = setTimeout(scrollToBottom, 100);
-    return () => clearTimeout(timeoutId);
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
-
-  const isMyMessage = (message: SupportMessage) => {
-    return message.user_id === currentUserId;
-  };
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-2 sm:p-3">
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-2" />
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Nenhuma mensagem ainda. Inicie a conversa!
-              </p>
-            </div>
-          </div>
-        </ScrollArea>
+      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        <div className="text-center">
+          <p>Nenhuma mensagem ainda.</p>
+          <p className="text-sm">Inicie a conversa enviando uma mensagem!</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden">
-      <ScrollArea ref={scrollAreaRef} className="h-full w-full">
-        <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 w-full">
-          {messages.map((message, index) => (
-            <MessageItem
-              key={`${message.id}-${index}`}
-              message={message}
-              isMyMessage={isMyMessage(message)}
-              currentUserId={currentUserId}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
-    </div>
+    <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
+      <div className="space-y-4 py-4">
+        {messages.map((message) => {
+          const isOwnMessage = message.user_id === currentUserId;
+          
+          return (
+            <div
+              key={message.id}
+              className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
+            >
+              <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                <AvatarFallback className="text-xs">
+                  {isOwnMessage ? 'EU' : (message.user?.name?.charAt(0) || 'U')}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className={`flex flex-col gap-1 max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium">
+                    {isOwnMessage ? 'Você' : (message.user?.name || 'Usuário')}
+                  </span>
+                  <span>{formatDate(message.created_at)}</span>
+                </div>
+                
+                <div
+                  className={`rounded-lg px-3 py-2 text-sm break-words ${
+                    isOwnMessage
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground'
+                  }`}
+                >
+                  {message.message}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+    </ScrollArea>
   );
 };
