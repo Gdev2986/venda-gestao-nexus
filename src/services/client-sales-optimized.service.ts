@@ -1,8 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientSalesResult {
-  sale_id: string;
+  id: string;
   code: string;
   terminal: string;
   transaction_date: string;
@@ -222,7 +221,7 @@ export const clientSalesOptimizedService = {
         );
 
         return {
-          sale_id: sale.id,
+          id: sale.id,  // Changed from sale_id to id
           code: sale.code,
           terminal: sale.terminal,
           transaction_date: sale.date,
