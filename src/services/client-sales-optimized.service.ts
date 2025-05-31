@@ -55,7 +55,7 @@ export const clientSalesOptimizedService = {
         throw error;
       }
 
-      const sales = data || [];
+      const sales = (data as ClientSalesResult[]) || [];
       const totalCount = sales.length > 0 ? sales[0].total_count : 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -109,7 +109,15 @@ export const clientSalesOptimizedService = {
         throw error;
       }
 
-      const stats = data?.[0] || {
+      const statsArray = data as Array<{
+        total_transactions: number;
+        total_gross: number;
+        total_net: number;
+        total_taxes: number;
+        payment_method_stats: any;
+      }>;
+
+      const stats = statsArray?.[0] || {
         total_transactions: 0,
         total_gross: 0,
         total_net: 0,
