@@ -9,7 +9,7 @@ import {
   createTicket as createTicketAPI, 
   updateTicket 
 } from "@/services/support/ticket-api";
-import { getMessages } from "@/services/support/message-api";
+import { getMessages, sendMessage as sendMessageAPI } from "@/services/support/message-api";
 import { SupportTicket, SupportMessage, CreateTicketParams, TicketStatus } from "@/types/support.types";
 
 export const useSupportSystem = () => {
@@ -69,28 +69,13 @@ export const useSupportSystem = () => {
     }
   }, [user?.role, clientId, toast]);
 
-  // Load messages for a specific ticket - now legacy, real-time hook handles this
+  // Load messages for a specific ticket
   const loadMessages = useCallback(async (ticketId: string, forceReload = false) => {
     try {
       const { data, error } = await getMessages(ticketId);
       if (error) throw error;
       
-      // Ensure messages have is_read property and compatible user data
-      const messagesWithReadStatus = (data || []).map(msg => {
-        // Handle user data more safely
-        const userData = msg.user && typeof msg.user === 'object' ? msg.user as any : null;
-        
-        return {
-          ...msg,
-          is_read: msg.is_read ?? false,
-          user: userData ? {
-            name: userData.name || 'Usuário',
-            email: userData.email || ''
-          } : undefined
-        };
-      });
-      
-      setMessages(messagesWithReadStatus);
+      setMessages(data || []);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -105,7 +90,9 @@ export const useSupportSystem = () => {
   const createTicket = useCallback(async (ticketData: CreateTicketParams): Promise<void> => {
     setIsCreating(true);
     try {
-      await createTicketAPI(ticketData);
+      const { data, error } = await createTicketAPI(ticketData);
+      if (error) throw error;
+      
       await loadTickets(); // Refresh tickets list
       
       toast({
@@ -172,11 +159,28 @@ export const useSupportSystem = () => {
     }
   }, [loadTickets, toast]);
 
-  // Legacy send message function - now handled by real-time hook
+  // Send message function
   const sendMessage = useCallback(async (ticketId: string, message: string) => {
-    // This is now a legacy function, real-time chat handles sending
-    console.warn('sendMessage called on legacy hook, use useSupportChatRealtime instead');
-  }, []);
+    try {
+      const { data, error } = await sendMessageAPI(ticketId, message);
+      if (error) throw error;
+      
+      // Reload messages to show the new one
+      await loadMessages(ticketId);
+      
+      toast({
+        title: "Sucesso",
+        description: "Mensagem enviada",
+      });
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a mensagem",
+        variant: "destructive"
+      });
+    }
+  }, [loadMessages, toast]);
 
   // Load client ID and tickets on mount
   useEffect(() => {
@@ -194,17 +198,17 @@ export const useSupportSystem = () => {
   return {
     tickets,
     selectedTicket,
-    messages, // Legacy - use useSupportChatRealtime for real-time messages
+    messages,
     isLoading,
     isCreating,
     clientId,
-    isSubscribed, // Legacy - managed by real-time hook now
+    isSubscribed,
     setSelectedTicket,
-    loadMessages, // Legacy - use useSupportChatRealtime
+    loadMessages,
     createTicket,
     updateTicketStatus,
     assignTicket,
-    sendMessage, // Legacy - use useSupportChatRealtime
+    sendMessage,
     refreshTickets: loadTickets
   };
 };

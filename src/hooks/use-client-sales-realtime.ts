@@ -3,20 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { clientSalesOptimizedService, ClientSalesStats } from "@/services/client-sales-optimized.service";
-
-interface ExtendedSale {
-  id: string;
-  code: string;
-  terminal: string;
-  transaction_date: string;
-  gross_amount: number;
-  net_amount: number;
-  tax_amount: number;
-  tax_rate: number;
-  payment_type: string;
-  installments: number;
-}
+import { clientSalesOptimizedService, ClientSalesStats, ClientSale } from "@/services/client-sales-optimized.service";
 
 // Função para obter a data de ontem
 const getYesterday = () => {
@@ -33,7 +20,7 @@ const getLastWeek = () => {
 };
 
 export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
-  const [sales, setSales] = useState<ExtendedSale[]>([]);
+  const [sales, setSales] = useState<ClientSale[]>([]);
   const [stats, setStats] = useState<ClientSalesStats>({
     total_transactions: 0,
     total_gross: 0,
@@ -64,6 +51,7 @@ export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
 
       if (clientAccess) {
         setClientId(clientAccess.client_id);
+        console.log('Client ID loaded:', clientAccess.client_id);
       }
     } catch (error) {
       console.error('Erro ao carregar client_id:', error);
@@ -187,34 +175,9 @@ export const useClientSalesRealtime = (startDate?: Date, endDate?: Date) => {
       )
       .subscribe();
 
-    // Subscription para mudanças de saldo detalhadas
-    const balanceChangesChannel = supabase
-      .channel('client-balance-changes-history')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'balance_changes',
-          filter: `client_id=eq.${clientId}`
-        },
-        (payload) => {
-          console.log('Balance change recorded:', payload);
-          
-          if (payload.new.reason?.includes('Venda automática')) {
-            toast({
-              title: "Crédito Adicionado",
-              description: `R$ ${Number(payload.new.amount_changed).toFixed(2)} adicionado ao seu saldo`,
-            });
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(salesChannel);
       supabase.removeChannel(balanceChannel);
-      supabase.removeChannel(balanceChangesChannel);
     };
   }, [clientId, currentPage, loadData, toast]);
 
