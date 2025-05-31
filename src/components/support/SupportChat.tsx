@@ -72,6 +72,7 @@ export const SupportChat = ({
             onSendMessage={sendMessage} 
             isLoading={isSending}
             disabled={!isSubscribed}
+            onMessageSent={refreshMessages} // Auto-refresh after sending
           />
         </CardContent>
       </Card>

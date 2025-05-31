@@ -61,7 +61,13 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     } finally {
       setIsLoading(false);
     }
-  }, [ticketId, user?.id, isOpen, messages.length, toast]);
+  }, [ticketId, user?.id, isOpen, toast]);
+
+  // Auto-refresh messages after sending
+  const refreshMessages = useCallback(async () => {
+    console.log('🔄 Refreshing messages for ticket:', ticketId);
+    await loadMessages(true);
+  }, [loadMessages, ticketId]);
 
   // Setup realtime subscription
   useEffect(() => {
@@ -81,7 +87,7 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
           filter: `conversation_id=eq.${ticketId}`
         },
         (payload) => {
-          console.log('📩 New message received:', payload.new);
+          console.log('📩 New message received via realtime:', payload.new);
           
           const newMessage = payload.new as any;
           
@@ -114,9 +120,12 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
             });
           }
 
-          // Mark as read if chat is open
+          // Mark as read if chat is open and auto-refresh
           if (user?.id && isOpen) {
-            markMessagesAsRead(ticketId, user.id);
+            setTimeout(() => {
+              markMessagesAsRead(ticketId, user.id);
+              refreshMessages();
+            }, 500);
           }
         }
       )
@@ -138,9 +147,9 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
       }
       setIsSubscribed(false);
     };
-  }, [ticketId, isOpen, user?.id, loadMessages, toast]);
+  }, [ticketId, isOpen, user?.id, loadMessages, toast, refreshMessages]);
 
-  // Send message function - fixed to use correct number of arguments
+  // Send message function with auto-refresh
   const handleSendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim() || !user?.id || !ticketId || isSending) return;
 
@@ -152,8 +161,10 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
 
       console.log('✅ Message sent successfully:', data);
       
-      // Note: The message will be added to state via realtime subscription
-      // so we don't need to manually add it here
+      // Auto-refresh messages after sending
+      setTimeout(() => {
+        refreshMessages();
+      }, 300);
       
     } catch (error) {
       console.error('❌ Error sending message:', error);
@@ -165,12 +176,7 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     } finally {
       setIsSending(false);
     }
-  }, [ticketId, user?.id, isSending, toast]);
-
-  // Refresh messages manually
-  const refreshMessages = useCallback(() => {
-    loadMessages(true);
-  }, [loadMessages]);
+  }, [ticketId, user?.id, isSending, toast, refreshMessages]);
 
   return {
     messages,

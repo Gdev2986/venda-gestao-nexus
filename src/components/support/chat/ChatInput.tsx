@@ -8,9 +8,15 @@ interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void>;
   isLoading?: boolean;
   disabled?: boolean;
+  onMessageSent?: () => void; // Callback after message is sent
 }
 
-export const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }: ChatInputProps) => {
+export const ChatInput = ({ 
+  onSendMessage, 
+  isLoading = false, 
+  disabled = false,
+  onMessageSent 
+}: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -21,6 +27,11 @@ export const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }
     try {
       await onSendMessage(message.trim());
       setMessage("");
+      
+      // Call the callback after successful send
+      if (onMessageSent) {
+        setTimeout(onMessageSent, 200);
+      }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
     } finally {
